@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 
@@ -24,7 +26,13 @@ class PlayerActivity : ComponentActivity() {
         val streamUrl = intent.getStringExtra("url") ?: return finish()
         val title = intent.getStringExtra("title") ?: ""
 
-        val player = ExoPlayer.Builder(this).build().apply {
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setConnectTimeoutMs(30_000)
+            .setReadTimeoutMs(30_000)
+
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build().apply {
             val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
             setMediaItem(mediaItem)
             prepare()

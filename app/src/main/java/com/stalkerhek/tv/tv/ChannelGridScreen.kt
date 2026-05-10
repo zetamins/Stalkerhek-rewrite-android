@@ -123,7 +123,7 @@ fun ChannelGridScreen(
             ) {
                 items(filteredChannels) { channel ->
                     ChannelCard(channel, onClick = {
-                        val streamUrl = "http://127.0.0.1$hlsAddr/${channel.cmd}"
+                        val streamUrl = "http://127.0.0.1$hlsAddr/${channel.title}"
                         val intent = Intent(context, PlayerActivity::class.java).apply {
                             putExtra("url", streamUrl)
                             putExtra("title", channel.title)
