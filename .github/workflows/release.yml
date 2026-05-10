@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant gradlew execute permission
+        run: chmod +x gradlew
+
+      - name: Build release APKs
+        run: ./gradlew assembleRelease
+        env:
+          CI: true
+
+      - name: Collect APKs
+        run: |
+          mkdir -p artifacts
+          OUT="app/build/outputs/apk/debug"
+          RELEASE="app/build/outputs/apk/release"
+
+          if [ -d "$OUT" ]; then
+            for apk in "$OUT"/*.apk; do
+              base=$(basename "$apk")
+              if echo "$base" | grep -q "arm64-v8a"; then
+                cp "$apk" "artifacts/Stalkerhek-TvPhone-arm64-v8a.apk"
+              elif echo "$base" | grep -q "armeabi-v7a"; then
+                cp "$apk" "artifacts/Stalkerhek-TvPhone-armeabi-v7a.apk"
+              elif echo "$base" | grep -q "x86_64"; then
+                cp "$apk" "artifacts/Stalkerhek-x86_64.apk"
+              elif echo "$base" | grep -q "universal"; then
+                cp "$apk" "artifacts/Stalkerhek-universal.apk"
+              elif echo "$base" | grep -qv "split-"; then
+                cp "$apk" "artifacts/Stalkerhek-universal.apk"
+              fi
+            done
+          fi
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stalkerhek-APKs
+          path: artifacts/
+          compression-level: 0
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          name: Stalkerhek ${{ github.ref_name }}
+          body: |
+            ## Stalkerhek Android App
+
+            ### Downloads
+            - **TV / Phone (arm64-v8a)** — For modern Android TV devices and phones
+            - **TV / Phone (armeabi-v7a)** — For older Android TV devices and phones
+            - **x86_64** — For x86 emulators and devices
+            - **Universal** — Contains all architectures
+
+            ### Installation
+            Download the APK matching your device and install it.
