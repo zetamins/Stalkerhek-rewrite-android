@@ -6,12 +6,9 @@ on:
     tags: [ 'v*' ]
   workflow_dispatch:
 
-env:
-  ANDROID_SDK_ROOT: /opt/android-sdk
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
@@ -22,45 +19,14 @@ jobs:
           java-version: 17
           distribution: temurin
 
-      - name: Cache Android SDK
-        id: cache-sdk
-        uses: actions/cache@v4
-        with:
-          path: /opt/android-sdk
-          key: android-sdk-35-v1
-
-      - name: Install Android SDK
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
-        run: |
-          sudo mkdir -p /opt/android-sdk
-          curl -sL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmd.zip
-          sudo unzip -q /tmp/cmd.zip -d /tmp/android-cmd
-          sudo mkdir -p /opt/android-sdk/cmdline-tools/latest
-          sudo mv /tmp/android-cmd/cmdline-tools/* /opt/android-sdk/cmdline-tools/latest/
-          sudo chmod -R 777 /opt/android-sdk
-          echo "Downloaded cmdline-tools:"
-          ls -la /opt/android-sdk/cmdline-tools/latest/bin/
-
-      - name: Install SDK packages
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
-        run: |
-          yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>&1
-          yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses 2>&1 || true
-
-      - name: Add SDK to PATH
-        run: |
-          echo "/opt/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "sdk.dir=/opt/android-sdk" > local.properties
-          echo "ANDROID_HOME=/opt/android-sdk" >> $GITHUB_ENV
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
       - name: Build debug APKs
-        run: |
-          set -x
-          cat local.properties
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Collect APKs
         run: |
@@ -70,9 +36,7 @@ jobs:
             for apk in "$OUT"/*.apk; do
               base=$(basename "$apk")
               if echo "$base" | grep -q "arm64-v8a"; then
-                cp "$apk" "artifacts/Stalkerhek-TvPhone-arm64-v8a.apk"
-              elif echo "$base" | grep -q "armeabi-v7a"; then
-                cp "$apk" "artifacts/Stalkerhek-TvPhone-armeabi-v7a.apk"
+                cp "$apk" "artifacts/Stalkerhek-TV-Phone-arm64-v8a.apk"
               elif echo "$base" | grep -q "x86_64"; then
                 cp "$apk" "artifacts/Stalkerhek-x86_64.apk"
               elif echo "$base" | grep -q "universal"; then
@@ -102,7 +66,6 @@ jobs:
 
             ### Downloads
             - **TV / Phone (arm64-v8a)** — For modern Android TV devices and phones
-            - **TV / Phone (armeabi-v7a)** — For older Android TV devices and phones
             - **x86_64** — For x86 emulators and devices
             - **Universal** — Contains all architectures
 
