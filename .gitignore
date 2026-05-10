@@ -12,3 +12,4 @@
 output.json
 local.properties
 /app/build
+release.keystore
