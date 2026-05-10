@@ -20,20 +20,35 @@ jobs:
           distribution: temurin
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install required SDK
         run: |
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" 2>&1 || true
+          mkdir -p /tmp/android-home
+          curl -sL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmd.zip
+          unzip -q /tmp/cmd.zip -d /tmp/cmd-tmp
+          mkdir -p /tmp/android-home/cmdline-tools
+          mv /tmp/cmd-tmp/cmdline-tools /tmp/android-home/cmdline-tools/latest
+          ls -la /tmp/android-home/cmdline-tools/latest/bin/
+          echo "ANDROID_HOME=/tmp/android-home" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=/tmp/android-home" >> $GITHUB_ENV
+          echo "/tmp/android-home/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+      - name: Install SDK packages
+        run: |
+          yes | /tmp/android-home/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>&1
+          yes | /tmp/android-home/cmdline-tools/latest/bin/sdkmanager --licenses 2>&1 || true
+
+      - name: Write local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+      - name: Grant gradlew execute permission
+        run: chmod +x gradlew
 
       - name: Build debug APKs
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
       - name: Collect APKs
         run: |
           mkdir -p artifacts
           OUT="app/build/outputs/apk/debug"
-
           if [ -d "$OUT" ]; then
             for apk in "$OUT"/*.apk; do
               base=$(basename "$apk")
