@@ -189,6 +189,9 @@ details.advanced-settings[open]{border-color:var(--border-light)}
     </div>
     <div class="nav-links">
       <a class="nav-link" href="/dashboard"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
+      <a class="nav-link" href="/api/backup/export"><i class="fa-solid fa-download"></i><span>Export</span></a>
+      <a class="nav-link" href="#" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-upload"></i><span>Import</span></a>
+      <form id="import-form" method="post" action="/api/backup/import" enctype="multipart/form-data" style="display:none"><input id="import-file" type="file" name="backup" accept=".json" onchange="showToast('Importing','Restoring backup...');this.form.submit()"/></form>
       <a class="nav-link" href="https://github.com/kidpoleon/stalkerhek" target="_blank"><i class="fa-brands fa-github"></i><span>GitHub</span></a>
     </div>
   </div>

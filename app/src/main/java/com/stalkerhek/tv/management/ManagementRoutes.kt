@@ -4,17 +4,15 @@ import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.engine.ProfileConfig
 import com.stalkerhek.tv.engine.RustEngineBridge
 import io.ktor.http.*
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.addJsonObject
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonObject
+import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
 
 // In-memory filter state cache — needed because the Rust engine persists filter state
@@ -437,5 +435,198 @@ fun Routing.managementRoutes(engine: EngineController) {
         val pid = call.request.queryParameters["id"]?.toIntOrNull() ?: 0
         val result = runBlocking { engine.getFilterState(pid) }
         call.respondText(result, ContentType.Application.Json)
+    }
+
+    // --- Backup / Restore (Import/Export) ---
+
+    get("/api/backup/export") {
+        val profiles = engine.profiles.value
+        val backup = buildJsonObject {
+            put("version", 1)
+            put("exported_at", System.currentTimeMillis() / 1000)
+            putJsonArray("profiles") {
+                profiles.forEach { p ->
+                    addJsonObject {
+                        put("id", p.id)
+                        put("name", p.name)
+                        put("portalUrl", p.portalUrl)
+                        put("mac", p.mac)
+                        put("username", p.username)
+                        put("password", p.password)
+                        put("hlsPort", p.hlsPort)
+                        put("proxyPort", p.proxyPort)
+                        put("timezone", p.timezone)
+                        put("serialNumber", p.serialNumber)
+                        put("deviceId", p.deviceId)
+                        put("deviceId2", p.deviceId2)
+                        put("signature", p.signature)
+                        put("model", p.model)
+                        put("watchdogInterval", p.watchdogInterval)
+                        put("deviceIdAuth", p.deviceIdAuth)
+                        put("hlsEnabled", p.hlsEnabled)
+                        put("proxyEnabled", p.proxyEnabled)
+                        put("proxyRewrite", p.proxyRewrite)
+                    }
+                }
+            }
+            putJsonObject("filters") {
+                profiles.forEach { p ->
+                    val state = runBlocking { engine.getFilterState(p.id) }
+                    put(p.id.toString(), Json.parseToJsonElement(state))
+                }
+            }
+        }
+        call.response.header("Content-Disposition", "attachment; filename=\"stalkerhek-backup.json\"")
+        call.response.header("Content-Type", "application/json")
+        call.respondText(backup.toString())
+    }
+
+    post("/api/backup/import") {
+        val multipart = call.receiveMultipart()
+        var jsonStr: String? = null
+        multipart.forEachPart { part ->
+            if (part is PartData.FileItem) {
+                jsonStr = String(part.provider().toByteArray(), Charsets.UTF_8)
+            }
+        }
+
+        if (jsonStr == null) {
+            call.respondText("No file uploaded", status = HttpStatusCode.BadRequest)
+            return@post
+        }
+
+        val backup = Json.parseToJsonElement(jsonStr).jsonObject
+        val backupProfiles = backup["profiles"]?.jsonArray ?: emptyList()
+        val backupFilters = backup["filters"]?.jsonObject ?: buildJsonObject {}
+
+        // Track old profile IDs to new IDs assigned by the engine
+        val idMap = mutableMapOf<Int, Int>()
+        val existingIds = engine.profiles.value.map { it.id }.toMutableSet()
+
+        // Create profiles
+        for (pEl in backupProfiles) {
+            val p = pEl.jsonObject
+            // Assign a unique ID that won't conflict with existing profiles
+            var newId = 1
+            while (newId in existingIds) newId++
+            existingIds.add(newId)
+            val profile = ProfileConfig(
+                id = newId,
+                name = p["name"]?.jsonPrimitive?.contentOrNull ?: "",
+                portalUrl = p["portalUrl"]?.jsonPrimitive?.contentOrNull ?: "",
+                mac = p["mac"]?.jsonPrimitive?.contentOrNull ?: "",
+                username = p["username"]?.jsonPrimitive?.contentOrNull ?: "",
+                password = p["password"]?.jsonPrimitive?.contentOrNull ?: "",
+                hlsPort = p["hlsPort"]?.jsonPrimitive?.content?.toIntOrNull() ?: 4600,
+                proxyPort = p["proxyPort"]?.jsonPrimitive?.content?.toIntOrNull() ?: 4800,
+                timezone = p["timezone"]?.jsonPrimitive?.contentOrNull ?: "UTC",
+                serialNumber = p["serialNumber"]?.jsonPrimitive?.contentOrNull ?: "0000000000000",
+                deviceId = p["deviceId"]?.jsonPrimitive?.contentOrNull ?: "f".repeat(64),
+                deviceId2 = p["deviceId2"]?.jsonPrimitive?.contentOrNull ?: "f".repeat(64),
+                signature = p["signature"]?.jsonPrimitive?.contentOrNull ?: "f".repeat(64),
+                model = p["model"]?.jsonPrimitive?.contentOrNull ?: "MAG254",
+                watchdogInterval = p["watchdogInterval"]?.jsonPrimitive?.content?.toIntOrNull() ?: 5,
+                deviceIdAuth = p["deviceIdAuth"]?.jsonPrimitive?.boolean ?: true,
+                hlsEnabled = p["hlsEnabled"]?.jsonPrimitive?.boolean ?: true,
+                proxyEnabled = p["proxyEnabled"]?.jsonPrimitive?.boolean ?: true,
+                proxyRewrite = p["proxyRewrite"]?.jsonPrimitive?.boolean ?: true,
+            )
+            val oldId = p["id"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+            val created = runBlocking { engine.createProfile(profile) }
+            created.getOrNull()?.let { newProfile ->
+                idMap[oldId] = newProfile.id
+            }
+        }
+
+        // Restore filter state for each profile
+        backupFilters.forEach { (key, value) ->
+            val oldId = key.toIntOrNull() ?: return@forEach
+            val newId = idMap[oldId] ?: return@forEach
+            val state = value.jsonObject
+
+            // Disabled genres (stored as an array in the raw engine state)
+            val disabledGenres = (state["disabled_genres"] as? JsonArray)
+                ?.map { it.jsonPrimitive.content }
+                ?: emptyList()
+            for (gid in disabledGenres) {
+                runBlocking {
+                    engine.filterUpdate(
+                        action = "toggle_genre",
+                        profileId = newId,
+                        genreId = gid,
+                        disabled = true
+                    )
+                }
+            }
+
+            // Disabled channels (supports both array and object formats)
+            val disabledChannels = when (val dc = state["disabled_channels"]) {
+                is JsonObject -> dc.map { it.key }
+                is JsonArray -> dc.map { it.jsonPrimitive.content }
+                else -> emptyList()
+            }
+            for (cmd in disabledChannels) {
+                runBlocking {
+                    engine.filterUpdate(
+                        action = "toggle_channel",
+                        profileId = newId,
+                        cmd = cmd,
+                        disabled = true
+                    )
+                }
+            }
+
+            // Enabled channels (supports both array and object formats)
+            val enabledChannels = when (val ec = state["enabled_channels"]) {
+                is JsonObject -> ec.map { it.key }
+                is JsonArray -> ec.map { it.jsonPrimitive.content }
+                else -> emptyList()
+            }
+            for (cmd in enabledChannels) {
+                runBlocking {
+                    engine.filterUpdate(
+                        action = "toggle_channel",
+                        profileId = newId,
+                        cmd = cmd,
+                        disabled = false
+                    )
+                }
+            }
+
+            // Rename rules (prefix/suffix)
+            val renamePrefix = state["rename_prefix"]?.jsonPrimitive?.contentOrNull ?: ""
+            val renameSuffix = state["rename_suffix"]?.jsonPrimitive?.contentOrNull ?: ""
+            if (renamePrefix.isNotEmpty() || renameSuffix.isNotEmpty()) {
+                try {
+                    val actionJson = buildJsonObject {
+                        put("profile_id", newId.toString())
+                        put("action", "rename")
+                        put("rename_prefix", renamePrefix)
+                        put("rename_suffix", renameSuffix)
+                    }
+                    RustEngineBridge.nativeFilterUpdate(actionJson.toString())
+                    renamePrefixMap[newId] = renamePrefix
+                    renameSuffixMap[newId] = renameSuffix
+                } catch (_: Exception) {}
+            }
+
+            // Genre renames
+            val genreRenames = (state["genre_renames"] as? JsonObject)
+                ?: buildJsonObject {}
+            genreRenames.forEach { (gid, name) ->
+                runBlocking {
+                    engine.filterUpdate(
+                        action = "rename_genre",
+                        profileId = newId,
+                        genreRenameId = gid,
+                        genreRenameName = name.jsonPrimitive.content
+                    )
+                }
+                val renames = genreRenamesMap.getOrPut(newId) { mutableMapOf() }
+                renames[gid] = name.jsonPrimitive.content
+            }
+        }
+
+        call.respondRedirect("/dashboard")
     }
 }
