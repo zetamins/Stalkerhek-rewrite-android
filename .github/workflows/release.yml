@@ -20,24 +20,12 @@ jobs:
           distribution: temurin
 
       - name: Setup Android SDK
-        run: |
-          mkdir -p /tmp/android-home
-          curl -sL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmd.zip
-          unzip -q /tmp/cmd.zip -d /tmp/cmd-tmp
-          mkdir -p /tmp/android-home/cmdline-tools
-          mv /tmp/cmd-tmp/cmdline-tools /tmp/android-home/cmdline-tools/latest
-          ls -la /tmp/android-home/cmdline-tools/latest/bin/
-          echo "ANDROID_HOME=/tmp/android-home" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/tmp/android-home" >> $GITHUB_ENV
-          echo "/tmp/android-home/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        uses: android-actions/setup-android@v3
 
-      - name: Install SDK packages
+      - name: Install API 35
         run: |
-          yes | /tmp/android-home/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>&1
-          yes | /tmp/android-home/cmdline-tools/latest/bin/sdkmanager --licenses 2>&1 || true
-
-      - name: Write local.properties
-        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+          yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>&1
+          yes | sdkmanager --licenses 2>&1 || true
 
       - name: Grant gradlew execute permission
         run: chmod +x gradlew
