@@ -25,8 +25,8 @@ jobs:
       - name: Grant gradlew execute permission
         run: chmod +x gradlew
 
-      - name: Build release APKs
-        run: ./gradlew assembleRelease
+      - name: Build debug APKs
+        run: ./gradlew assembleDebug
         env:
           CI: true
 
@@ -34,7 +34,6 @@ jobs:
         run: |
           mkdir -p artifacts
           OUT="app/build/outputs/apk/debug"
-          RELEASE="app/build/outputs/apk/release"
 
           if [ -d "$OUT" ]; then
             for apk in "$OUT"/*.apk; do

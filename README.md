@@ -2,6 +2,8 @@
 
 Android IPTV streaming client with embedded STB emulation engine. Built with Jetpack Compose for TV and Android, powered by a Rust native engine.
 
+This is a rebuild and fork of [kidpoleon/stalkerhek](https://github.com/kidpoleon/stalkerhek), porting the full management web UI and engine controller into a standalone Android app with a modern Jetpack Compose UI, foreground service, and automated CI releases.
+
 ## Features
 
 - **Embedded Engine** — Full STB portal emulation via native Rust library (JNI)
