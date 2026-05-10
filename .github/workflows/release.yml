@@ -22,13 +22,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android 35 platform
+        run: |
+          yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
+
       - name: Grant gradlew execute permission
         run: chmod +x gradlew
 
       - name: Build debug APKs
-        run: ./gradlew assembleDebug
-        env:
-          CI: true
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Collect APKs
         run: |
