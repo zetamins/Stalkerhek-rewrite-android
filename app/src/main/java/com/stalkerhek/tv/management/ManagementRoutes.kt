@@ -13,7 +13,15 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
+import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
+
+// Generate a random hex string of the given length (used for device IDs, serial, etc.)
+private val secureRandom = SecureRandom()
+private fun randomHex(length: Int): String {
+    val chars = "0123456789abcdef"
+    return (1..length).map { chars[secureRandom.nextInt(chars.length)] }.joinToString("")
+}
 
 // In-memory filter state cache — needed because the Rust engine persists filter state
 // internally but doesn't expose a read-back API for rename rules and genre renames.
@@ -71,10 +79,22 @@ fun Routing.managementRoutes(engine: EngineController) {
             username = params["username"]?.trim() ?: "",
             password = password,
             model = (params["model"]?.trim() ?: "").ifEmpty { "MAG254" },
-            serialNumber = (params["serial_number"]?.trim() ?: "").ifEmpty { "0000000000000" },
-            deviceId = (params["device_id"]?.trim() ?: "").ifEmpty { "f".repeat(64) },
-            deviceId2 = (params["device_id2"]?.trim() ?: "").ifEmpty { "f".repeat(64) },
-            signature = (params["signature"]?.trim() ?: "").ifEmpty { "f".repeat(64) },
+            serialNumber = (params["serial_number"]?.trim() ?: "").let {
+                val v = it.trim()
+                if (v.isNotEmpty() && v != "0000000000000") v else randomHex(13)
+            },
+            deviceId = (params["device_id"]?.trim() ?: "").let {
+                val v = it.trim()
+                if (v.isNotEmpty() && v != "f".repeat(64)) v else randomHex(64)
+            },
+            deviceId2 = (params["device_id2"]?.trim() ?: "").let {
+                val v = it.trim()
+                if (v.isNotEmpty() && v != "f".repeat(64)) v else randomHex(64)
+            },
+            signature = (params["signature"]?.trim() ?: "").let {
+                val v = it.trim()
+                if (v.isNotEmpty() && v != "f".repeat(64)) v else randomHex(64)
+            },
             timezone = (params["timezone"]?.trim() ?: "").ifEmpty { "UTC" },
             watchdogInterval = params["watchdog_time"]?.toIntOrNull() ?: 5,
             deviceIdAuth = params["username"]?.trim().isNullOrEmpty(),
