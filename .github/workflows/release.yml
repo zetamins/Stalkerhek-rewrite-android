@@ -31,7 +31,32 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build debug APKs
-        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
+        run: |
+          echo "=== ENV ==="
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la local.properties 2>/dev/null || true
+          cat local.properties 2>/dev/null || true
+          echo "=== SDK ==="
+          ls -la $ANDROID_HOME/platforms/ 2>/dev/null || true
+          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || true
+          echo "=== JAVA ==="
+          java -version 2>&1 || true
+          echo "=== BUILD ==="
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          echo "EXIT_CODE=${PIPESTATUS[0]}"
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "=== FAILURE LOG ==="
+            tail -100 build.log
+          fi
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: Collect APKs
         run: |
