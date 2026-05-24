@@ -52,15 +52,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon 2>&1 | tee /tmp/gradle-output.txt || true
+            ./gradlew assembleRelease --no-daemon --info 2>&1
           else
-            ./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/gradle-output.txt || true
+            ./gradlew assembleDebug --no-daemon --info 2>&1
           fi
-          echo "### Last 120 lines of Gradle output" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -120 /tmp/gradle-output.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -q "BUILD SUCCESSFUL" /tmp/gradle-output.txt || exit 1
 
       - name: Upload build log on failure
         if: failure()
