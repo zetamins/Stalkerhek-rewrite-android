@@ -52,12 +52,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/b.log || true
+            ./gradlew assembleRelease --no-daemon --stacktrace
           else
-            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/b.log || true
+            ./gradlew assembleDebug --no-daemon --stacktrace
           fi
-          while IFS= read -r line; do echo "::error::$line"; done < <(grep "^e: " /tmp/b.log | head -30)
-          grep -q "BUILD SUCCESSFUL" /tmp/b.log
 
       - name: Collect APKs
         run: |

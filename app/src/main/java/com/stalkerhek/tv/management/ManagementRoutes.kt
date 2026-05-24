@@ -11,6 +11,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.toByteArray
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
 import java.security.SecureRandom
@@ -142,8 +146,8 @@ fun Routing.managementRoutes(engine: EngineController) {
         // The browser polls /api/profile_status every 1.5s and will see the running state
         // once the background start completes.
         call.respondText("""{"ok":true,"id":$id,"starting":true}""", ContentType.Application.Json)
-        // Fire start in background — ManagementServer scope so it survives the request
-        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        // Fire start in a supervised background scope so the request thread is freed
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             engine.startProfile(profile)
         }
     }
