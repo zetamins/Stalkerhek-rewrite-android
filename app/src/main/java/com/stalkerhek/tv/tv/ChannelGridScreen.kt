@@ -3,20 +3,22 @@ package com.stalkerhek.tv.tv
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,154 +26,224 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
-import com.stalkerhek.tv.engine.Category
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
+import com.stalkerhek.tv.persistence.FavouritesRepository
+import com.stalkerhek.tv.persistence.WatchHistoryRepository
+import com.stalkerhek.tv.persistence.WatchHistoryEntry
+import kotlinx.coroutines.launch
+
+enum class ChannelView { ALL, GENRE, FAVOURITES, HISTORY }
 
 @Composable
-fun ChannelGridScreen(
-    navController: NavController,
-    mediaType: String = "itv"
-) {
+fun ChannelGridScreen(navController: NavController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
 
-    var channels by remember { mutableStateOf<List<Channel>>(emptyList()) }
-    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var allChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
+    var genres by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedGenre by remember { mutableStateOf("") }
+    var currentView by remember { mutableStateOf(ChannelView.ALL) }
     var isLoading by remember { mutableStateOf(true) }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var lastPlayedCmd by remember { mutableStateOf("") }
+    var toastMsg by remember { mutableStateOf("") }
+    var favouriteCount by remember { mutableStateOf(0) }
 
-    LaunchedEffect(profileId, mediaType) {
-        if (profileId == 0) return@LaunchedEffect
-        isLoading = true
-        errorMsg = null
-        try {
-            channels = EngineController.getChannels(profileId, mediaType)
-            if (mediaType == "vod" || mediaType == "series") {
-                categories = EngineController.getCategories(profileId, mediaType)
+    // Derived channel list
+    val displayChannels = remember(allChannels, selectedGenre, currentView, searchQuery, profileId) {
+        var list = allChannels.filter { it.enabled }
+        when (currentView) {
+            ChannelView.FAVOURITES -> {
+                val favs = FavouritesRepository.getFavourites(profileId)
+                list = list.filter { it.cmd in favs }
             }
-        } catch (e: Exception) {
-            errorMsg = e.message
+            ChannelView.HISTORY -> {
+                val history = WatchHistoryRepository.getHistory(profileId).map { it.cmd }
+                list = history.mapNotNull { cmd -> list.find { it.cmd == cmd } }
+            }
+            else -> {
+                if (selectedGenre.isNotEmpty()) list = list.filter { it.genre == selectedGenre }
+            }
         }
+        if (searchQuery.length >= 2) list = list.filter { it.title.contains(searchQuery, ignoreCase = true) }
+        list
+    }
+
+    LaunchedEffect(profileId) {
+        if (profileId == 0) { isLoading = false; return@LaunchedEffect }
+        isLoading = true
+        allChannels = try { EngineController.getChannels(profileId, "itv") } catch (_: Exception) { emptyList() }
+        genres = allChannels.map { it.genre }.filter { it.isNotEmpty() }.distinct().sorted()
+        favouriteCount = FavouritesRepository.getFavourites(profileId).size
         isLoading = false
     }
 
-    val filteredChannels = channels
-        .filter { it.enabled }
-        .let { if (selectedGenre.isEmpty()) it else it.filter { ch -> ch.genreId == selectedGenre } }
+    // Toast auto-dismiss
+    LaunchedEffect(toastMsg) {
+        if (toastMsg.isNotEmpty()) {
+            kotlinx.coroutines.delay(2000)
+            toastMsg = ""
+        }
+    }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09)).padding(16.dp)) {
-        // Top bar
-        Text(
-            text = when (mediaType) {
-                "vod" -> "Movies"
-                "series" -> "Series"
-                else -> "Channels"
-            },
-            color = Color.White,
-            fontSize = 24.sp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+    fun playChannel(channel: Channel) {
+        lastPlayedCmd = channel.cmd
+        WatchHistoryRepository.record(WatchHistoryEntry(
+            profileId = profileId, cmd = channel.cmd, title = channel.title,
+            genre = channel.genre, logo = channel.logo
+        ))
+        context.startActivity(Intent(context, PlayerActivity::class.java).apply {
+            putExtra("url", "http://127.0.0.1$hlsAddr/${channel.title.encodeUrl()}")
+            putExtra("title", channel.title)
+            putExtra("cmd", channel.cmd)
+            putExtra("profileId", profileId)
+        })
+    }
 
-        // Genre filter row
-        if (categories.isNotEmpty() || mediaType == "itv") {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-            ) {
-                val allCategories = listOf(Category("", "All")) + categories
-                allCategories.forEach { cat ->
-                    val isSelected = selectedGenre == cat.id
-                    Box(
-                        modifier = Modifier
-                            .width(120.dp).height(36.dp)
-                            .clickable { selectedGenre = if (isSelected) "" else cat.id }
-                            .background(
-                                if (isSelected) Color(0xFF2D8A4E) else Color(0xFF1A2C1F),
-                                RoundedCornerShape(8.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            cat.title.ifEmpty { cat.name }.ifEmpty { "Other" },
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+    fun toggleFavourite(channel: Channel) {
+        val added = FavouritesRepository.toggle(profileId, channel.cmd)
+        favouriteCount = FavouritesRepository.getFavourites(profileId).size
+        toastMsg = if (added) "⭐ Added to favourites" else "Removed from favourites"
+    }
+
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09))) {
+        // Top bar with tabs
+        Row(
+            modifier = Modifier.fillMaxWidth().background(Color(0xFF0C120E)).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // View tabs
+            listOf(
+                ChannelView.ALL to "📺 All",
+                ChannelView.FAVOURITES to "⭐ Fav ${if (favouriteCount > 0) "($favouriteCount)" else ""}",
+                ChannelView.HISTORY to "🕐 History",
+            ).forEach { (view, label) ->
+                val selected = currentView == view
+                Box(
+                    modifier = Modifier.clickable { currentView = view; selectedGenre = "" }
+                        .background(if (selected) Color(0xFF2D8A4E) else Color(0xFF111A14), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(label, color = if (selected) Color.White else Color(0xFF8BA38D), fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }
+
+            Spacer(Modifier.weight(1f))
+
+            // Search icon
+            Box(
+                modifier = Modifier.clickable { navController.navigate("search") }
+                    .background(Color(0xFF111A14), RoundedCornerShape(8.dp)).padding(10.dp)
+            ) {
+                Text("🔍", fontSize = 16.sp)
+            }
+            // EPG icon
+            Box(
+                modifier = Modifier.clickable { navController.navigate("epg") }
+                    .background(Color(0xFF111A14), RoundedCornerShape(8.dp)).padding(10.dp)
+            ) {
+                Text("📅", fontSize = 16.sp)
+            }
+            // VOD icon
+            Box(
+                modifier = Modifier.clickable { navController.navigate("vod") }
+                    .background(Color(0xFF111A14), RoundedCornerShape(8.dp)).padding(10.dp)
+            ) {
+                Text("🎬", fontSize = 16.sp)
+            }
+        }
+
+        // Genre strip (only in ALL view)
+        if (currentView == ChannelView.ALL && genres.isNotEmpty()) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth().background(Color(0xFF0A0F0B)).padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                item { CategoryChip("All", selectedGenre.isEmpty()) { selectedGenre = "" } }
+                items(genres) { genre -> CategoryChip(genre, selectedGenre == genre) { selectedGenre = genre } }
+            }
+        }
+
+        // Channel count
+        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+            Text("${displayChannels.size} channels", color = Color(0xFF4A6A54), fontSize = 11.sp)
+            if (searchQuery.isNotEmpty()) Text(" · filtered by \"$searchQuery\"", color = Color(0xFF4A6A54), fontSize = 11.sp)
         }
 
         when {
             isLoading -> LoadingGrid()
-            errorMsg != null -> Box(
-                Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-            ) { Text("Error: $errorMsg", color = Color.Red, fontSize = 18.sp) }
-            filteredChannels.isEmpty() -> Box(
-                Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-            ) { Text("No channels available", color = Color.Gray, fontSize = 18.sp) }
-            else -> LazyVerticalGrid(
-                columns = GridCells.Fixed(6),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filteredChannels) { channel ->
-                    ChannelCard(channel, onClick = {
-                        val streamUrl = "http://127.0.0.1$hlsAddr/${channel.title.encodeUrl()}"
-                        val intent = Intent(context, PlayerActivity::class.java).apply {
-                            putExtra("url", streamUrl)
-                            putExtra("title", channel.title)
-                        }
-                        context.startActivity(intent)
-                    })
+            displayChannels.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(if (currentView == ChannelView.FAVOURITES) "⭐" else if (currentView == ChannelView.HISTORY) "🕐" else "📺", fontSize = 48.sp)
+                    Spacer(Modifier.height(12.dp))
+                    Text(when (currentView) {
+                        ChannelView.FAVOURITES -> "No favourites yet\nLong-press a channel to add"
+                        ChannelView.HISTORY -> "No watch history yet"
+                        else -> "No channels found"
+                    }, color = Color(0xFF8BA38D), fontSize = 14.sp, textAlign = TextAlign.Center)
                 }
+            }
+            else -> LazyVerticalGrid(
+                columns = GridCells.Fixed(8),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(displayChannels, key = { it.cmd }) { channel ->
+                    val isFav = FavouritesRepository.isFavourite(profileId, channel.cmd)
+                    ChannelCard(
+                        channel = channel,
+                        isFavourite = isFav,
+                        onClick = { playChannel(channel) },
+                        onLongClick = { toggleFavourite(channel) }
+                    )
+                }
+            }
+        }
+    }
+
+    // Toast
+    if (toastMsg.isNotEmpty()) {
+        Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
+            Box(
+                modifier = Modifier.background(Color(0xEE111A14), RoundedCornerShape(12.dp)).padding(horizontal = 20.dp, vertical = 10.dp)
+            ) {
+                Text(toastMsg, color = Color.White, fontSize = 14.sp)
             }
         }
     }
 }
 
 @Composable
-fun ChannelCard(channel: Channel, onClick: () -> Unit) {
-    var isFocused by remember { mutableStateOf(false) }
-
+fun ChannelCard(channel: Channel, isFavourite: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     Box(
-        modifier = Modifier
-            .aspectRatio(16f / 9f)
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable(onClick = onClick)
-            .background(
-                if (isFocused) Color(0xFF2D8A4E) else Color(0xFF111A14),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.aspectRatio(16f / 9f)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .background(Color(0xFF111A14), RoundedCornerShape(8.dp))
     ) {
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        AsyncImage(
+            model = channel.logo.ifEmpty { null },
+            contentDescription = channel.title,
+            modifier = Modifier.fillMaxSize().padding(8.dp),
+            contentScale = ContentScale.Fit
+        )
+        // Title overlay at bottom
+        Box(
+            Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                .background(Color(0xCC000000), RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
+                .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
-            AsyncImage(
-                model = channel.logo.ifEmpty { null },
-                contentDescription = channel.title,
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                channel.title,
-                color = Color.White,
-                fontSize = 12.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
+            Text(channel.title, color = Color.White, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        // Favourite star
+        if (isFavourite) {
+            Text("⭐", fontSize = 10.sp, modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
         }
     }
 }
@@ -179,40 +251,15 @@ fun ChannelCard(channel: Channel, onClick: () -> Unit) {
 @Composable
 fun LoadingGrid() {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(6),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxSize()
+        columns = GridCells.Fixed(8),
+        modifier = Modifier.fillMaxSize().padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        items(12) {
+        items(32) {
             Box(
-                Modifier.aspectRatio(16f / 9f).background(
-                    Color(0xFF1A2C1F),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                modifier = Modifier.aspectRatio(16f / 9f).background(Color(0xFF111A14), RoundedCornerShape(8.dp))
             )
-        }
-    }
-}
-
-@Suppress("unused")
-private fun idFromStatus(status: Any): Int {
-    return try { EngineController.profiles.value.firstOrNull()?.id ?: 0 } catch (_: Exception) { 0 }
-}
-
-/** Percent-encode a string for use in a URL path segment (UTF-8 bytes). */
-private fun String.encodeUrl(): String {
-    val bytes = toByteArray(Charsets.UTF_8)
-    return buildString(bytes.size * 3) {
-        for (b in bytes) {
-            val i = b.toInt() and 0xFF
-            if (i in 0x41..0x5A || i in 0x61..0x7A || i in 0x30..0x39 ||
-                i == 0x2D || i == 0x5F || i == 0x2E || i == 0x7E) {
-                append(i.toChar())
-            } else {
-                append('%')
-                append(i.toString(16).padStart(2, '0').uppercase())
-            }
         }
     }
 }
