@@ -46,27 +46,25 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build APKs
-        id: gradle_build
-        continue-on-error: true
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
+            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log || true
           else
-            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
+            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/build.log || true
           fi
-
-      - name: Show compile errors
-        if: steps.gradle_build.outcome == 'failure' || steps.gradle_build.outcome == 'success'
-        run: |
-          echo "=== KOTLIN ERRORS ==="
-          grep -n "^e: \|error: \|Unresolved reference\|None of the following\|Cannot access\|Cannot infer\|Overload resolution\|Type mismatch\|is not applicable" /tmp/build.log || echo "No matching errors found"
-          echo "=== LAST 50 LINES ==="
-          tail -50 /tmp/build.log
-          grep -q "BUILD SUCCESSFUL" /tmp/build.log || exit 1
+          # Emit each error line as a GitHub workflow error annotation
+          while IFS= read -r line; do
+            echo "::error::$line"
+          done < <(grep -E "^e: |error:|Unresolved|None of the following|Cannot access|Cannot infer|overload|Type mismatch" /tmp/build.log 2>/dev/null | head -30)
+          # Also show last 80 lines
+          echo "::group::Last 80 lines of build output"
+          tail -80 /tmp/build.log
+          echo "::endgroup::"
+          grep -q "BUILD SUCCESSFUL" /tmp/build.log
 
       - name: Upload build log on failure
         if: failure()
