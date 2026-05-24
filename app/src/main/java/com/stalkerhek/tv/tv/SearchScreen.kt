@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.tv.material3.Text
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
@@ -28,7 +27,7 @@ import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun SearchScreen(navController: NavController) {
+fun SearchScreen() {
     val context = LocalContext.current
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
@@ -99,7 +98,10 @@ fun SearchScreen(navController: NavController) {
                         .clickable {
                             val url = "http://127.0.0.1$hlsAddr/${ch.title.encodeUrl()}"
                             context.startActivity(Intent(context, PlayerActivity::class.java).apply {
-                                putExtra("url", url); putExtra("title", ch.title)
+                                putExtra("url", url)
+                                putExtra("title", ch.title)
+                                putExtra("cmd", ch.cmd)
+                                putExtra("profileId", profileId)
                             })
                         }.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically

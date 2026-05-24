@@ -68,6 +68,8 @@ fun ChannelGridScreen(navController: NavController) {
         }
         list
     }
+
+    LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
         allChannels = try { EngineController.getChannels(profileId, "itv") } catch (_: Exception) { emptyList() }

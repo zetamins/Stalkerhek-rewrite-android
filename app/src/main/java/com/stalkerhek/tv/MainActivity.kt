@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = if (profiles.isEmpty()) "settings" else "channels"
                 ) {
                     composable("channels")    { ChannelGridScreen(navController) }
-                    composable("search")      { SearchScreen(navController) }
+                    composable("search")      { SearchScreen() }
                     composable("epg")         { EpgScreen(navController) }
                     composable("vod")         { VodScreen(navController) }
                     composable("favourites")  { FavouritesScreen(navController) }
