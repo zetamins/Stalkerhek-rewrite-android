@@ -36,6 +36,8 @@ fun VodScreen(navController: NavController) {
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
     val proxyAddr = profileStatus?.proxyAddr ?: ":4800"
+    val config = LocalConfiguration.current
+    val columns = if (config.screenWidthDp < config.screenHeightDp) 3 else 5
     var categories by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedCategory by remember { mutableStateOf("") }
     var allVodChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
