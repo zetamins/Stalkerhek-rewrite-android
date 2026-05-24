@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import android.content.Intent
@@ -26,6 +25,7 @@ import coil.compose.AsyncImage
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.persistence.FavouritesRepository
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun FavouritesScreen(navController: NavController) {
     val context = LocalContext.current
@@ -74,6 +74,7 @@ fun FavouritesScreen(navController: NavController) {
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun FavChannelCard(channel: Channel, onClick: () -> Unit) {
     Box(

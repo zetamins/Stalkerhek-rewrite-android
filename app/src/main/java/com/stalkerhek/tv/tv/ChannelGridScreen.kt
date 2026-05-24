@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import android.content.Intent
@@ -34,6 +33,7 @@ import com.stalkerhek.tv.persistence.WatchHistoryRepository
 import com.stalkerhek.tv.persistence.WatchHistoryEntry
 import kotlinx.coroutines.delay
 enum class ChannelView { ALL, GENRE, FAVOURITES, HISTORY }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ChannelGridScreen(navController: NavController) {
     val context = LocalContext.current
@@ -198,6 +198,7 @@ Long-press a channel to add"
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ChannelCard(channel: Channel, isFavourite: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     Box(
@@ -225,6 +226,7 @@ fun ChannelCard(channel: Channel, isFavourite: Boolean, onClick: () -> Unit, onL
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun LoadingGrid() {
     LazyVerticalGrid(

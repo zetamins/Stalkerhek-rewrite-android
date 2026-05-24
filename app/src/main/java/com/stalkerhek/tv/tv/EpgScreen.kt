@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import androidx.compose.foundation.background
@@ -52,6 +51,7 @@ data class EpgEntry(
     }
 }
 data class ChannelEpg(val channel: Channel, val entries: List<EpgEntry>)
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun EpgScreen(navController: NavController) {
     val profileId by EngineController.activeProfileId.collectAsState()
@@ -115,6 +115,7 @@ fun EpgScreen(navController: NavController) {
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun EpgChannelRow(channelEpg: ChannelEpg) {
     val scrollState = rememberScrollState()
@@ -134,6 +135,7 @@ fun EpgChannelRow(channelEpg: ChannelEpg) {
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun EpgEntryCard(entry: EpgEntry) {
     val bgColor = if (entry.isLive) Color(0xFF1A2C1F) else Color(0xFF111A14)

@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import android.app.PictureInPictureParams
@@ -44,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+@OptIn(ExperimentalTvMaterial3Api::class, UnstableApi::class)
 class PlayerActivity : ComponentActivity() {
     private var player: ExoPlayer? = null
     private var streamUrl = ""
@@ -62,7 +62,6 @@ class PlayerActivity : ComponentActivity() {
     private var reconnectAttempts = 0
     private val maxReconnects = 5
     private val reconnectHandler = Handler(Looper.getMainLooper())
-    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         streamUrl = intent.getStringExtra("url") ?: run { finish(); return }
@@ -139,7 +138,6 @@ class PlayerActivity : ComponentActivity() {
             }
         }
     }
-    @OptIn(UnstableApi::class)
     private fun buildPlayer() {
         player?.release()
         val dataSourceFactory = DefaultHttpDataSource.Factory()

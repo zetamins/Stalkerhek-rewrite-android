@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import android.content.Intent
@@ -28,6 +27,7 @@ import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun VodScreen(navController: NavController) {
     val context = LocalContext.current
@@ -103,6 +103,7 @@ fun VodScreen(navController: NavController) {
         }
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
@@ -113,6 +114,7 @@ fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Text(label, color = if (selected) Color.White else Color(0xFF8BA38D), fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun VodCard(vod: Channel, onClick: () -> Unit) {
     Column(

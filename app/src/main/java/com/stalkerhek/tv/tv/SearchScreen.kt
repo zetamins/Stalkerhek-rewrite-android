@@ -1,4 +1,3 @@
-@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
 import com.stalkerhek.tv.util.encodeUrl
 import androidx.compose.foundation.background
@@ -25,6 +24,7 @@ import com.stalkerhek.tv.engine.EngineController
 import kotlinx.coroutines.delay
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun SearchScreen() {
     val context = LocalContext.current

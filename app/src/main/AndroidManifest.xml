@@ -37,6 +37,7 @@
 
         <activity
             android:name=".tv.PlayerActivity"
+            android:supportsPictureInPicture="true"
             android:exported="false"
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize" />
