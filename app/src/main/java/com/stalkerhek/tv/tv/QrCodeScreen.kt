@@ -3,6 +3,7 @@ package com.stalkerhek.tv.tv
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -15,14 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.util.getLocalIpAddress
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun QrCodeScreen() {
+fun QrCodeScreen(navController: NavController? = null) {
     val profile by EngineController.activeProfile.collectAsState()
     val localIp = remember { getLocalIpAddress() }
     val mgmtPort = 4400
@@ -55,7 +59,20 @@ fun QrCodeScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Logo / Title
+        // Back button
+        if (navController != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "← Back",
+                    color = Color(0xFF2D8A4E),
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable { navController.popBackStack() }
+                )
+            }
+        }
         Text(
             "Stalkerhek",
             color = Color(0xFF2D8A4E),

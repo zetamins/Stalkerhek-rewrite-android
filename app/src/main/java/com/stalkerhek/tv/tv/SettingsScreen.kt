@@ -58,6 +58,19 @@ fun SettingsScreen(navController: NavController) {
                     }
                 )
             }
+            item {
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { navController.navigate("qr") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.colors(
+                        containerColor = Color(0xFF0C120E),
+                        focusedContainerColor = Color(0xFF1A2C1F)
+                    )
+                ) {
+                    Text("📡  Connection Info & QR Code", color = Color(0xFF2D8A4E), fontSize = 14.sp)
+                }
+            }
         }
     }
 }

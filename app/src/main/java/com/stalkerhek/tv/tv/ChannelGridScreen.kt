@@ -140,6 +140,20 @@ fun ChannelGridScreen(navController: NavController) {
             ) {
                 Text("🎬", fontSize = 16.sp)
             }
+            // Info / QR code icon
+            Box(
+                modifier = Modifier.clickable { navController.navigate("qr") }
+                    .background(Color(0xFF111A14), RoundedCornerShape(8.dp)).padding(10.dp)
+            ) {
+                Text("📡", fontSize = 16.sp)
+            }
+            // Settings icon
+            Box(
+                modifier = Modifier.clickable { navController.navigate("settings") }
+                    .background(Color(0xFF111A14), RoundedCornerShape(8.dp)).padding(10.dp)
+            ) {
+                Text("⚙️", fontSize = 16.sp)
+            }
         }
         // Genre strip (only in ALL view)
         if (currentView == ChannelView.ALL && genres.isNotEmpty()) {
