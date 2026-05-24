@@ -27,6 +27,18 @@ fun SettingsScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val profiles by EngineController.profiles.collectAsState()
     val activeProfile by EngineController.activeProfile.collectAsState()
+    val activeProfileId by EngineController.activeProfileId.collectAsState()
+    var startingId by remember { mutableStateOf<Int?>(null) }
+
+    // When a profile becomes active after we triggered start, navigate to channels
+    LaunchedEffect(activeProfileId) {
+        if (activeProfileId > 0 && startingId != null && activeProfileId == startingId) {
+            startingId = null
+            navController.navigate("channels") {
+                popUpTo("settings") { inclusive = false }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().background(Color(0xFF080C09)).padding(24.dp)
@@ -40,18 +52,41 @@ fun SettingsScreen(navController: NavController) {
 
         if (profiles.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No profiles configured. Use the management UI to add a profile.", color = Color.Gray, fontSize = 16.sp)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("No profiles configured", color = Color.White, fontSize = 18.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Open the management UI in a browser on the same network,\nor scan the QR code below.",
+                        color = Color(0xFF8BA38D),
+                        fontSize = 14.sp
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { navController.navigate("qr") },
+                        colors = ButtonDefaults.colors(containerColor = Color(0xFF0C120E), focusedContainerColor = Color(0xFF1A2C1F))
+                    ) {
+                        Text("📡  Show Connection Info", color = Color(0xFF2D8A4E))
+                    }
+                }
             }
             return
         }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(profiles) { profile ->
+                val isStarting = startingId == profile.id
                 ProfileCard(
                     profile = profile,
-                    status = activeProfile,
+                    status = if (activeProfile?.let { true } == true && activeProfileId == profile.id) activeProfile else null,
+                    isStarting = isStarting,
                     onStart = {
-                        scope.launch { EngineController.startProfile(profile) }
+                        startingId = profile.id
+                        scope.launch {
+                            val result = EngineController.startProfile(profile)
+                            if (result.isFailure) {
+                                startingId = null
+                            }
+                        }
                     },
                     onStop = {
                         scope.launch { EngineController.stopProfile(profile.id) }
@@ -80,6 +115,7 @@ fun SettingsScreen(navController: NavController) {
 fun ProfileCard(
     profile: ProfileConfig,
     status: ProfileStatus?,
+    isStarting: Boolean = false,
     onStart: () -> Unit,
     onStop: () -> Unit
 ) {
@@ -89,35 +125,38 @@ fun ProfileCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                if (isFocused) Color(0xFF1A2C1F) else Color(0xFF111A14)
-            )
+            .background(if (isFocused) Color(0xFF1A2C1F) else Color(0xFF111A14))
             .padding(16.dp)
             .onFocusChanged { isFocused = it.isFocused },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(profile.name, color = Color.White, fontSize = 18.sp)
+            Text(profile.name.ifEmpty { "Profile ${profile.id}" }, color = Color.White, fontSize = 18.sp)
             Text(
-                if (isRunning) "Running - ${status?.channelsCount ?: 0} channels"
-                else "Stopped",
-                color = if (isRunning) Color(0xFF2D8A4E) else Color.Gray,
+                when {
+                    isStarting -> "Starting..."
+                    isRunning -> "Running — ${status?.channelsCount ?: 0} channels"
+                    else -> "Stopped"
+                },
+                color = when {
+                    isStarting -> Color(0xFFD4A94A)
+                    isRunning -> Color(0xFF2D8A4E)
+                    else -> Color.Gray
+                },
                 fontSize = 14.sp
             )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (isRunning) {
-                Button(
-                    onClick = onStop,
-                ) {
+            when {
+                isStarting -> Button(onClick = {}, colors = ButtonDefaults.colors(containerColor = Color(0xFF1A2C1F))) {
+                    Text("Starting...", color = Color(0xFFD4A94A))
+                }
+                isRunning -> Button(onClick = onStop) {
                     Text("Stop", color = Color.White)
                 }
-            } else {
-                Button(
-                    onClick = onStart,
-                ) {
+                else -> Button(onClick = onStart) {
                     Text("Start", color = Color.White)
                 }
             }
