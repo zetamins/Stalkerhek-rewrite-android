@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,33 +18,30 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
 import kotlinx.coroutines.delay
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
-
 @Composable
 fun SearchScreen() {
     val context = LocalContext.current
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
-
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var cachedChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     val focusRequester = remember { FocusRequester() }
-
     // Load channel list once when screen appears or profile changes
     LaunchedEffect(profileId) {
         if (profileId == 0) return@LaunchedEffect
         cachedChannels = try { EngineController.getChannels(profileId, "itv").filter { it.enabled } }
                          catch (_: Exception) { emptyList() }
     }
-
     LaunchedEffect(query) {
         if (query.length < 2) { results = emptyList(); return@LaunchedEffect }
         delay(300)
@@ -56,12 +52,9 @@ fun SearchScreen() {
         }.take(100)
         isSearching = false
     }
-
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09)).padding(24.dp)) {
         Text("Search Channels", color = Color.White, fontSize = 22.sp, modifier = Modifier.padding(bottom = 16.dp))
-
         Row(
             modifier = Modifier.fillMaxWidth().background(Color(0xFF111A14), RoundedCornerShape(12.dp)).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -81,7 +74,6 @@ fun SearchScreen() {
                 Text("✕", color = Color(0xFF8BA38D), fontSize = 18.sp, modifier = Modifier.padding(start = 8.dp).clickable { query = "" })
             }
         }
-
         Spacer(Modifier.height(8.dp))
         if (isSearching) {
             Text("Searching...", color = Color(0xFF8BA38D), fontSize = 14.sp, modifier = Modifier.padding(8.dp))
@@ -90,7 +82,6 @@ fun SearchScreen() {
         } else {
             Text("${results.size} results", color = Color(0xFF8BA38D), fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
         }
-
         LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items(results) { ch ->
                 Row(

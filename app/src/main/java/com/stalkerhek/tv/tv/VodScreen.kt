@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,11 +23,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
-
 @Composable
 fun VodScreen(navController: NavController) {
     val context = LocalContext.current
@@ -36,18 +35,15 @@ fun VodScreen(navController: NavController) {
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
     val proxyAddr = profileStatus?.proxyAddr ?: ":4800"
-
     var categories by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedCategory by remember { mutableStateOf("") }
     var allVodChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-
     // Derived item list — filtering happens in-memory, no second network call
     val items = remember(allVodChannels, selectedCategory) {
         if (selectedCategory.isEmpty()) allVodChannels
         else allVodChannels.filter { it.genre == selectedCategory }
     }
-
     LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
@@ -57,14 +53,12 @@ fun VodScreen(navController: NavController) {
         selectedCategory = categories.firstOrNull() ?: ""
         isLoading = false
     }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09))) {
         // Header
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("🎬 VOD", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Text("${items.size} titles", color = Color(0xFF8BA38D), fontSize = 13.sp)
         }
-
         // Category filter strip
         if (categories.isNotEmpty()) {
             LazyRow(
@@ -80,7 +74,6 @@ fun VodScreen(navController: NavController) {
             }
             Spacer(Modifier.height(12.dp))
         }
-
         when {
             isLoading -> LoadingGrid()
             items.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -110,7 +103,6 @@ fun VodScreen(navController: NavController) {
         }
     }
 }
-
 @Composable
 fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
@@ -121,7 +113,6 @@ fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Text(label, color = if (selected) Color.White else Color(0xFF8BA38D), fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
-
 @Composable
 fun VodCard(vod: Channel, onClick: () -> Unit) {
     Column(

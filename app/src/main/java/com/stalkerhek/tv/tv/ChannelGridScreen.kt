@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.stalkerhek.tv.engine.Channel
@@ -33,17 +33,13 @@ import com.stalkerhek.tv.persistence.FavouritesRepository
 import com.stalkerhek.tv.persistence.WatchHistoryRepository
 import com.stalkerhek.tv.persistence.WatchHistoryEntry
 import kotlinx.coroutines.delay
-
 enum class ChannelView { ALL, GENRE, FAVOURITES, HISTORY }
-
 @Composable
 fun ChannelGridScreen(navController: NavController) {
     val context = LocalContext.current
-
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
-
     var allChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var genres by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedGenre by remember { mutableStateOf("") }
@@ -68,7 +64,6 @@ fun ChannelGridScreen(navController: NavController) {
         }
         list
     }
-
     LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
@@ -77,7 +72,6 @@ fun ChannelGridScreen(navController: NavController) {
         favouriteCount = FavouritesRepository.getFavourites(profileId).size
         isLoading = false
     }
-
     // Toast auto-dismiss
     LaunchedEffect(toastMsg) {
         if (toastMsg.isNotEmpty()) {
@@ -85,7 +79,6 @@ fun ChannelGridScreen(navController: NavController) {
             toastMsg = ""
         }
     }
-
     fun playChannel(channel: Channel) {
         WatchHistoryRepository.record(WatchHistoryEntry(
             profileId = profileId, cmd = channel.cmd, title = channel.title,
@@ -98,13 +91,11 @@ fun ChannelGridScreen(navController: NavController) {
             putExtra("profileId", profileId)
         })
     }
-
     fun toggleFavourite(channel: Channel) {
         val added = FavouritesRepository.toggle(profileId, channel.cmd)
         favouriteCount = FavouritesRepository.getFavourites(profileId).size
         toastMsg = if (added) "⭐ Added to favourites" else "Removed from favourites"
     }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09))) {
         // Top bar with tabs
         Row(
@@ -127,9 +118,7 @@ fun ChannelGridScreen(navController: NavController) {
                     Text(label, color = if (selected) Color.White else Color(0xFF8BA38D), fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
                 }
             }
-
             Spacer(Modifier.weight(1f))
-
             // Search icon
             Box(
                 modifier = Modifier.clickable { navController.navigate("search") }
@@ -152,7 +141,6 @@ fun ChannelGridScreen(navController: NavController) {
                 Text("🎬", fontSize = 16.sp)
             }
         }
-
         // Genre strip (only in ALL view)
         if (currentView == ChannelView.ALL && genres.isNotEmpty()) {
             LazyRow(
@@ -163,12 +151,10 @@ fun ChannelGridScreen(navController: NavController) {
                 items(genres) { genre -> CategoryChip(genre, selectedGenre == genre) { selectedGenre = genre } }
             }
         }
-
         // Channel count
         Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
             Text("${displayChannels.size} channels", color = Color(0xFF4A6A54), fontSize = 11.sp)
         }
-
         when {
             isLoading -> LoadingGrid()
             displayChannels.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -176,7 +162,8 @@ fun ChannelGridScreen(navController: NavController) {
                     Text(if (currentView == ChannelView.FAVOURITES) "⭐" else if (currentView == ChannelView.HISTORY) "🕐" else "📺", fontSize = 48.sp)
                     Spacer(Modifier.height(12.dp))
                     Text(when (currentView) {
-                        ChannelView.FAVOURITES -> "No favourites yet\nLong-press a channel to add"
+                        ChannelView.FAVOURITES -> "No favourites yet
+Long-press a channel to add"
                         ChannelView.HISTORY -> "No watch history yet"
                         else -> "No channels found"
                     }, color = Color(0xFF8BA38D), fontSize = 14.sp, textAlign = TextAlign.Center)
@@ -200,7 +187,6 @@ fun ChannelGridScreen(navController: NavController) {
             }
         }
     }
-
     // Toast
     if (toastMsg.isNotEmpty()) {
         Box(Modifier.fillMaxSize().padding(bottom = 24.dp), contentAlignment = Alignment.BottomCenter) {
@@ -212,7 +198,6 @@ fun ChannelGridScreen(navController: NavController) {
         }
     }
 }
-
 @Composable
 fun ChannelCard(channel: Channel, isFavourite: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     Box(
@@ -240,7 +225,6 @@ fun ChannelCard(channel: Channel, isFavourite: Boolean, onClick: () -> Unit, onL
         }
     }
 }
-
 @Composable
 fun LoadingGrid() {
     LazyVerticalGrid(

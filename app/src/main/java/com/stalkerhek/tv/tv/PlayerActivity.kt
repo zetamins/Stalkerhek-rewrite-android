@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import android.app.PictureInPictureParams
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -35,6 +34,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import androidx.lifecycle.lifecycleScope
 import com.stalkerhek.tv.engine.EngineController
@@ -44,30 +44,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 class PlayerActivity : ComponentActivity() {
-
     private var player: ExoPlayer? = null
     private var streamUrl = ""
     private var channelTitle = ""
     private var channelCmd = ""
     private var profileId = 0
-
     // Compose state updaters — set from Player.Listener (main thread)
     private var setIsBuffering: ((Boolean) -> Unit)? = null
     private var setErrorMsg: ((String) -> Unit)? = null
     private var setDialDisplay: ((String) -> Unit)? = null
-
     // Channel number dialling
     private val dialBuffer = StringBuilder()
     private val dialHandler = Handler(Looper.getMainLooper())
     private val dialRunnable = Runnable { commitChannelDial() }
-
     // Auto-reconnect
     private var reconnectAttempts = 0
     private val maxReconnects = 5
     private val reconnectHandler = Handler(Looper.getMainLooper())
-
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,15 +69,12 @@ class PlayerActivity : ComponentActivity() {
         channelTitle = intent.getStringExtra("title") ?: ""
         channelCmd = intent.getStringExtra("cmd") ?: ""
         profileId = intent.getIntExtra("profileId", 0)
-
         buildPlayer()
-
         setContent {
             var isBuffering by remember { mutableStateOf(true) }
             var errorMsg by remember { mutableStateOf("") }
             var showOsd by remember { mutableStateOf(true) }
             var dialDisplay by remember { mutableStateOf("") }
-
             // Wire state updaters so Player.Listener can update Compose state
             DisposableEffect(Unit) {
                 setIsBuffering = { v -> isBuffering = v }
@@ -91,7 +82,6 @@ class PlayerActivity : ComponentActivity() {
                 setDialDisplay = { v -> dialDisplay = v }
                 onDispose { setIsBuffering = null; setErrorMsg = null; setDialDisplay = null }
             }
-
             // Record watch start
             LaunchedEffect(Unit) {
                 if (channelCmd.isNotEmpty() && profileId > 0) {
@@ -103,7 +93,6 @@ class PlayerActivity : ComponentActivity() {
                 delay(3000)
                 showOsd = false
             }
-
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 AndroidView(
                     factory = { ctx ->
@@ -116,7 +105,6 @@ class PlayerActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-
                 // OSD overlay
                 if (showOsd) {
                     Box(Modifier.fillMaxSize().background(Color(0x88000000))) {
@@ -130,7 +118,6 @@ class PlayerActivity : ComponentActivity() {
                         }
                     }
                 }
-
                 // Error overlay
                 if (errorMsg.isNotEmpty()) {
                     Box(Modifier.fillMaxSize().background(Color(0xCC000000)), contentAlignment = Alignment.Center) {
@@ -142,7 +129,6 @@ class PlayerActivity : ComponentActivity() {
                         }
                     }
                 }
-
                 // Channel number dial display
                 if (dialDisplay.isNotEmpty()) {
                     Box(Modifier.align(Alignment.TopStart).padding(24.dp)
@@ -153,7 +139,6 @@ class PlayerActivity : ComponentActivity() {
             }
         }
     }
-
     @OptIn(UnstableApi::class)
     private fun buildPlayer() {
         player?.release()
@@ -161,7 +146,6 @@ class PlayerActivity : ComponentActivity() {
             .setConnectTimeoutMs(15_000)
             .setReadTimeoutMs(20_000)
             .setAllowCrossProtocolRedirects(true)
-
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .build().apply {
@@ -195,7 +179,6 @@ class PlayerActivity : ComponentActivity() {
                 })
             }
     }
-
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         // Channel number dialling via remote number buttons
         if (keyCode in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9) {
@@ -213,7 +196,6 @@ class PlayerActivity : ComponentActivity() {
         }
         return super.onKeyDown(keyCode, event)
     }
-
     private fun commitChannelDial() {
         val number = dialBuffer.toString().toIntOrNull() ?: run { dialBuffer.clear(); setDialDisplay?.invoke(""); return }
         dialBuffer.clear()
@@ -240,16 +222,13 @@ class PlayerActivity : ComponentActivity() {
             } catch (_: Exception) {}
         }
     }
-
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (supportsPip() && player?.isPlaying == true) enterPip()
     }
-
     private fun supportsPip(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
         packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-
     private fun enterPip() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val params = PictureInPictureParams.Builder()
@@ -258,12 +237,10 @@ class PlayerActivity : ComponentActivity() {
             enterPictureInPictureMode(params)
         }
     }
-
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         // Hide system UI in PiP mode
     }
-
     override fun onStop() {
         super.onStop()
         // Save watch position for resume
@@ -276,7 +253,6 @@ class PlayerActivity : ComponentActivity() {
             player?.pause()
         }
     }
-
     override fun onDestroy() {
         reconnectHandler.removeCallbacksAndMessages(null)
         dialHandler.removeCallbacksAndMessages(null)

@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -18,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
@@ -28,7 +28,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
-
 data class EpgEntry(
     val channelId: String,
     val title: String,
@@ -52,19 +51,15 @@ data class EpgEntry(
         return "$startStr – $stopStr"
     }
 }
-
 data class ChannelEpg(val channel: Channel, val entries: List<EpgEntry>)
-
 @Composable
 fun EpgScreen(navController: NavController) {
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
-
     var channelEpgs by remember { mutableStateOf<List<ChannelEpg>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf("") }
-
     LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
@@ -88,13 +83,11 @@ fun EpgScreen(navController: NavController) {
         }
         isLoading = false
     }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09)).padding(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("TV Guide", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Text(SimpleDateFormat("EEEE, d MMM", Locale.getDefault()).format(Date()), color = Color(0xFF8BA38D), fontSize = 13.sp)
         }
-
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -122,7 +115,6 @@ fun EpgScreen(navController: NavController) {
         }
     }
 }
-
 @Composable
 fun EpgChannelRow(channelEpg: ChannelEpg) {
     val scrollState = rememberScrollState()
@@ -142,7 +134,6 @@ fun EpgChannelRow(channelEpg: ChannelEpg) {
         }
     }
 }
-
 @Composable
 fun EpgEntryCard(entry: EpgEntry) {
     val bgColor = if (entry.isLive) Color(0xFF1A2C1F) else Color(0xFF111A14)
@@ -166,7 +157,6 @@ fun EpgEntryCard(entry: EpgEntry) {
         }
     }
 }
-
 private fun parseEpgJson(json: String): List<EpgEntry> {
     return try {
         val root = JSONObject(json)
@@ -185,7 +175,6 @@ private fun parseEpgJson(json: String): List<EpgEntry> {
         entries
     } catch (_: Exception) { emptyList() }
 }
-
 private fun fetchWithTimeout(url: String, timeoutMs: Int): String {
     val conn = URL(url).openConnection() as HttpURLConnection
     return try {

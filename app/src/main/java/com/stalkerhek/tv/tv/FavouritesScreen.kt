@@ -1,7 +1,6 @@
+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 package com.stalkerhek.tv.tv
-
 import com.stalkerhek.tv.util.encodeUrl
-
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,22 +20,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.stalkerhek.tv.engine.Channel
 import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.persistence.FavouritesRepository
-
 @Composable
 fun FavouritesScreen(navController: NavController) {
     val context = LocalContext.current
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
     val hlsAddr = profileStatus?.hlsAddr ?: ":4600"
-
     var favChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-
     LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
@@ -45,13 +42,11 @@ fun FavouritesScreen(navController: NavController) {
         favChannels = allChannels.filter { it.cmd in favCmds }
         isLoading = false
     }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09)).padding(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("⭐ Favourites", color = Color.White, fontSize = 24.sp, modifier = Modifier.weight(1f))
             Text("${favChannels.size} channels", color = Color(0xFF8BA38D), fontSize = 13.sp)
         }
-
         when {
             isLoading -> LoadingGrid()
             favChannels.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -79,7 +74,6 @@ fun FavouritesScreen(navController: NavController) {
         }
     }
 }
-
 @Composable
 fun FavChannelCard(channel: Channel, onClick: () -> Unit) {
     Box(
