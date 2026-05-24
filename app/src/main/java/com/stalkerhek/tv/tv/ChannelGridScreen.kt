@@ -123,7 +123,7 @@ fun ChannelGridScreen(
             ) {
                 items(filteredChannels) { channel ->
                     ChannelCard(channel, onClick = {
-                        val streamUrl = "http://127.0.0.1$hlsAddr/${channel.title}"
+                        val streamUrl = "http://127.0.0.1$hlsAddr/${channel.title.encodeUrl()}"
                         val intent = Intent(context, PlayerActivity::class.java).apply {
                             putExtra("url", streamUrl)
                             putExtra("title", channel.title)
@@ -198,4 +198,21 @@ fun LoadingGrid() {
 @Suppress("unused")
 private fun idFromStatus(status: Any): Int {
     return try { EngineController.profiles.value.firstOrNull()?.id ?: 0 } catch (_: Exception) { 0 }
+}
+
+/** Percent-encode a string for use in a URL path segment (UTF-8 bytes). */
+private fun String.encodeUrl(): String {
+    val bytes = toByteArray(Charsets.UTF_8)
+    return buildString(bytes.size * 3) {
+        for (b in bytes) {
+            val i = b.toInt() and 0xFF
+            if (i in 0x41..0x5A || i in 0x61..0x7A || i in 0x30..0x39 ||
+                i == 0x2D || i == 0x5F || i == 0x2E || i == 0x7E) {
+                append(i.toChar())
+            } else {
+                append('%')
+                append(i.toString(16).padStart(2, '0').uppercase())
+            }
+        }
+    }
 }
