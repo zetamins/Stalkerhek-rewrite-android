@@ -38,26 +38,22 @@ fun VodScreen(navController: NavController) {
 
     var categories by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedCategory by remember { mutableStateOf("") }
-    var items by remember { mutableStateOf<List<Channel>>(emptyList()) }
+    var allVodChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    var searchQuery by remember { mutableStateOf("") }
+
+    // Derived item list — filtering happens in-memory, no second network call
+    val items = remember(allVodChannels, selectedCategory) {
+        if (selectedCategory.isEmpty()) allVodChannels
+        else allVodChannels.filter { it.genre == selectedCategory }
+    }
 
     LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
         val allVod = try { EngineController.getChannels(profileId, "vod") } catch (_: Exception) { emptyList() }
-        val cats = allVod.map { it.genre }.distinct().filter { it.isNotEmpty() }.sorted()
-        categories = cats
-        selectedCategory = cats.firstOrNull() ?: ""
-        items = if (selectedCategory.isEmpty()) allVod else allVod.filter { it.genre == selectedCategory }
-        isLoading = false
-    }
-
-    LaunchedEffect(selectedCategory) {
-        if (profileId == 0) return@LaunchedEffect
-        isLoading = true
-        val allVod = try { EngineController.getChannels(profileId, "vod") } catch (_: Exception) { emptyList() }
-        items = if (selectedCategory.isEmpty()) allVod else allVod.filter { it.genre == selectedCategory }
+        allVodChannels = allVod
+        categories = allVod.map { it.genre }.distinct().filter { it.isNotEmpty() }.sorted()
+        selectedCategory = categories.firstOrNull() ?: ""
         isLoading = false
     }
 

@@ -22,6 +22,7 @@ import com.stalkerhek.tv.engine.EngineController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
@@ -72,8 +73,8 @@ fun EpgScreen(navController: NavController) {
                 channels.mapNotNull { ch ->
                     try {
                         val encoded = ch.title.encodeUrl()
-                        val url = "http://127.0.0.1$hlsAddr/epg/$encoded"
-                        val text = URL(url).readText()
+                        val url = "http://127.0.0.1$hlsAddr/epg?title=$encoded"
+                        val text = fetchWithTimeout(url, timeoutMs = 5000)
                         val entries = parseEpgJson(text)
                         if (entries.isEmpty()) null else ChannelEpg(ch, entries)
                     } catch (_: Exception) { null }
@@ -143,7 +144,6 @@ fun EpgChannelRow(channelEpg: ChannelEpg) {
 @Composable
 fun EpgEntryCard(entry: EpgEntry) {
     val bgColor = if (entry.isLive) Color(0xFF1A2C1F) else Color(0xFF111A14)
-    val borderColor = if (entry.isLive) Color(0xFF2D8A4E) else Color(0xFF1A2C1F)
     Box(
         modifier = Modifier.width(160.dp).background(bgColor, RoundedCornerShape(8.dp))
             .padding(1.dp).background(bgColor, RoundedCornerShape(7.dp)).padding(10.dp)
@@ -182,4 +182,16 @@ private fun parseEpgJson(json: String): List<EpgEntry> {
         }
         entries
     } catch (_: Exception) { emptyList() }
+}
+
+private fun fetchWithTimeout(url: String, timeoutMs: Int): String {
+    val conn = URL(url).openConnection() as HttpURLConnection
+    return try {
+        conn.connectTimeout = timeoutMs
+        conn.readTimeout = timeoutMs
+        conn.connect()
+        conn.inputStream.bufferedReader().readText()
+    } finally {
+        conn.disconnect()
+    }
 }

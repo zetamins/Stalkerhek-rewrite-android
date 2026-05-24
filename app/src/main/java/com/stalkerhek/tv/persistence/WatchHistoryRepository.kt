@@ -30,11 +30,12 @@ object WatchHistoryRepository {
         history[profileId]?.toList() ?: emptyList()
 
     fun updatePosition(profileId: Int, cmd: String, positionMs: Long) {
-        history[profileId]?.let { list ->
+        val list = history[profileId] ?: return
+        // Synchronize the index lookup + replacement to make it atomic
+        synchronized(list) {
             val idx = list.indexOfFirst { it.cmd == cmd }
             if (idx >= 0) {
-                val existing = list[idx]
-                list[idx] = existing.copy(positionMs = positionMs, watchedAt = System.currentTimeMillis())
+                list[idx] = list[idx].copy(positionMs = positionMs, watchedAt = System.currentTimeMillis())
             }
         }
     }

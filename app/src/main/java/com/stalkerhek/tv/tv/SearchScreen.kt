@@ -35,15 +35,24 @@ fun SearchScreen(navController: NavController) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
+    var cachedChannels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     val focusRequester = remember { FocusRequester() }
+
+    // Load channel list once when screen appears or profile changes
+    LaunchedEffect(profileId) {
+        if (profileId == 0) return@LaunchedEffect
+        cachedChannels = try { EngineController.getChannels(profileId, "itv").filter { it.enabled } }
+                         catch (_: Exception) { emptyList() }
+    }
 
     LaunchedEffect(query) {
         if (query.length < 2) { results = emptyList(); return@LaunchedEffect }
         delay(300)
         isSearching = true
-        results = try { EngineController.getChannels(profileId, "itv").filter {
+        // Search in-memory cached list — no JNI call per keystroke
+        results = cachedChannels.filter {
             it.title.contains(query, ignoreCase = true) || it.genre.contains(query, ignoreCase = true)
-        }.take(100) } catch (_: Exception) { emptyList() }
+        }.take(100)
         isSearching = false
     }
 
@@ -97,8 +106,6 @@ fun SearchScreen(navController: NavController) {
                         Text(ch.title, color = Color.White, fontSize = 14.sp)
                         Text(ch.genre, color = Color(0xFF8BA38D), fontSize = 11.sp)
                     }
-                    if (!ch.enabled) Text("Hidden", color = Color(0xFFE85D4D), fontSize = 10.sp,
-                        modifier = Modifier.background(Color(0x22E85D4D), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
                 }
             }
         }

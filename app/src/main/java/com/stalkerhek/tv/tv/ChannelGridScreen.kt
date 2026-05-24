@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,14 +30,13 @@ import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.persistence.FavouritesRepository
 import com.stalkerhek.tv.persistence.WatchHistoryRepository
 import com.stalkerhek.tv.persistence.WatchHistoryEntry
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 enum class ChannelView { ALL, GENRE, FAVOURITES, HISTORY }
 
 @Composable
 fun ChannelGridScreen(navController: NavController) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     val profileId by EngineController.activeProfileId.collectAsState()
     val profileStatus by EngineController.activeProfile.collectAsState()
@@ -49,13 +47,11 @@ fun ChannelGridScreen(navController: NavController) {
     var selectedGenre by remember { mutableStateOf("") }
     var currentView by remember { mutableStateOf(ChannelView.ALL) }
     var isLoading by remember { mutableStateOf(true) }
-    var searchQuery by remember { mutableStateOf("") }
-    var lastPlayedCmd by remember { mutableStateOf("") }
     var toastMsg by remember { mutableStateOf("") }
     var favouriteCount by remember { mutableStateOf(0) }
 
     // Derived channel list
-    val displayChannels = remember(allChannels, selectedGenre, currentView, searchQuery, profileId) {
+    val displayChannels = remember(allChannels, selectedGenre, currentView, profileId) {
         var list = allChannels.filter { it.enabled }
         when (currentView) {
             ChannelView.FAVOURITES -> {
@@ -70,11 +66,8 @@ fun ChannelGridScreen(navController: NavController) {
                 if (selectedGenre.isNotEmpty()) list = list.filter { it.genre == selectedGenre }
             }
         }
-        if (searchQuery.length >= 2) list = list.filter { it.title.contains(searchQuery, ignoreCase = true) }
         list
     }
-
-    LaunchedEffect(profileId) {
         if (profileId == 0) { isLoading = false; return@LaunchedEffect }
         isLoading = true
         allChannels = try { EngineController.getChannels(profileId, "itv") } catch (_: Exception) { emptyList() }
@@ -173,7 +166,6 @@ fun ChannelGridScreen(navController: NavController) {
         // Channel count
         Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
             Text("${displayChannels.size} channels", color = Color(0xFF4A6A54), fontSize = 11.sp)
-            if (searchQuery.isNotEmpty()) Text(" · filtered by \"$searchQuery\"", color = Color(0xFF4A6A54), fontSize = 11.sp)
         }
 
         when {

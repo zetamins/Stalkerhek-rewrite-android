@@ -1,7 +1,6 @@
 package com.stalkerhek.tv.tv
 
 import android.app.PictureInPictureParams
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
@@ -17,8 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -35,10 +33,13 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
-import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.persistence.WatchHistoryRepository
 import com.stalkerhek.tv.persistence.WatchHistoryEntry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlayerActivity : ComponentActivity() {
 
@@ -47,6 +48,11 @@ class PlayerActivity : ComponentActivity() {
     private var channelTitle = ""
     private var channelCmd = ""
     private var profileId = 0
+
+    // Compose state updaters — set from Player.Listener (main thread)
+    private var setIsBuffering: ((Boolean) -> Unit)? = null
+    private var setErrorMsg: ((String) -> Unit)? = null
+    private var setDialDisplay: ((String) -> Unit)? = null
 
     // Channel number dialling
     private val dialBuffer = StringBuilder()
@@ -73,6 +79,14 @@ class PlayerActivity : ComponentActivity() {
             var errorMsg by remember { mutableStateOf("") }
             var showOsd by remember { mutableStateOf(true) }
             var dialDisplay by remember { mutableStateOf("") }
+
+            // Wire state updaters so Player.Listener can update Compose state
+            DisposableEffect(Unit) {
+                setIsBuffering = { v -> isBuffering = v }
+                setErrorMsg = { v -> errorMsg = v }
+                setDialDisplay = { v -> dialDisplay = v }
+                onDispose { setIsBuffering = null; setErrorMsg = null; setDialDisplay = null }
+            }
 
             // Record watch start
             LaunchedEffect(Unit) {
@@ -152,11 +166,16 @@ class PlayerActivity : ComponentActivity() {
                 playWhenReady = true
                 addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
-                        if (state == Player.STATE_READY) reconnectAttempts = 0
+                        when (state) {
+                            Player.STATE_BUFFERING -> setIsBuffering?.invoke(true)
+                            Player.STATE_READY     -> { setIsBuffering?.invoke(false); setErrorMsg?.invoke(""); reconnectAttempts = 0 }
+                            else -> {}
+                        }
                     }
                     override fun onPlayerError(error: PlaybackException) {
                         if (reconnectAttempts < maxReconnects) {
                             reconnectAttempts++
+                            setErrorMsg?.invoke(error.localizedMessage ?: "Playback error")
                             val delayMs = (2000L * reconnectAttempts).coerceAtMost(30_000L)
                             reconnectHandler.postDelayed({
                                 player?.let {
@@ -178,6 +197,7 @@ class PlayerActivity : ComponentActivity() {
         if (keyCode in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9) {
             val digit = keyCode - KeyEvent.KEYCODE_0
             dialBuffer.append(digit)
+            setDialDisplay?.invoke(dialBuffer.toString())
             dialHandler.removeCallbacks(dialRunnable)
             dialHandler.postDelayed(dialRunnable, 2000)
             return true
@@ -191,11 +211,32 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun commitChannelDial() {
-        val number = dialBuffer.toString().toIntOrNull() ?: return
+        val number = dialBuffer.toString().toIntOrNull() ?: run { dialBuffer.clear(); setDialDisplay?.invoke(""); return }
         dialBuffer.clear()
-        // Look up channel by number in the current profile's channel list
-        // Channels are ordered, so number 1 = first channel, etc.
-        // This is a best-effort implementation — some portals assign channel numbers
+        setDialDisplay?.invoke("")
+        if (number < 1) return
+        // Look up the nth channel (1-based) from the current profile's channel list
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val channels = com.stalkerhek.tv.engine.EngineController.getChannels(profileId, "itv")
+                        .filter { it.enabled }
+                    val target = channels.getOrNull(number - 1) ?: return@launch
+                    val hlsAddr = com.stalkerhek.tv.engine.EngineController.activeProfile.value?.hlsAddr ?: ":4600"
+                    val newUrl = "http://127.0.0.1$hlsAddr/${target.title.encodeUrl()}"
+                    streamUrl = newUrl
+                    channelTitle = target.title
+                    channelCmd = target.cmd
+                    withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        player?.let {
+                            it.setMediaItem(androidx.media3.common.MediaItem.fromUri(android.net.Uri.parse(newUrl)))
+                            it.prepare()
+                            it.play()
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     override fun onUserLeaveHint() {
