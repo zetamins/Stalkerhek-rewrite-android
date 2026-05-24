@@ -106,7 +106,7 @@ fun ChannelGridScreen(navController: NavController) {
             // View tabs
             listOf(
                 ChannelView.ALL to "📺 All",
-                ChannelView.FAVOURITES to "⭐ Fav ${if (favouriteCount > 0) "($favouriteCount)" else ""}",
+                ChannelView.FAVOURITES to if (favouriteCount > 0) "⭐ Fav ($favouriteCount)" else "⭐ Fav",
                 ChannelView.HISTORY to "🕐 History",
             ).forEach { (view, label) ->
                 val selected = currentView == view

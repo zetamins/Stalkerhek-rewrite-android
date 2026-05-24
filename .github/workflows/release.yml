@@ -52,27 +52,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log || true
+            ./gradlew assembleRelease --no-daemon --stacktrace
           else
-            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/build.log || true
+            ./gradlew assembleDebug --no-daemon --stacktrace
           fi
-          # Emit each error line as a GitHub workflow error annotation
-          while IFS= read -r line; do
-            echo "::error::$line"
-          done < <(grep -E "^e: |error:|Unresolved|None of the following|Cannot access|Cannot infer|overload|Type mismatch" /tmp/build.log 2>/dev/null | head -30)
-          # Also show last 80 lines
-          echo "::group::Last 80 lines of build output"
-          tail -80 /tmp/build.log
-          echo "::endgroup::"
-          grep -q "BUILD SUCCESSFUL" /tmp/build.log
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-error-log
-          path: /tmp/gradle-output.txt
-          retention-days: 1
 
       - name: Collect APKs
         run: |

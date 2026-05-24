@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                     composable("vod")         { VodScreen(navController) }
                     composable("favourites")  { FavouritesScreen(navController) }
                     composable("settings")    { SettingsScreen(navController) }
-                    composable("qr")          { QrCodeScreen(navController) }
+                    composable("qr")          { QrCodeScreen() }
                 }
             }
         }
