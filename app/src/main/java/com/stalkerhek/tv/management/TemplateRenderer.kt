@@ -50,7 +50,7 @@ fun renderDashboardHtml(engine: EngineController): String {
   </div>
   <div class="card-details" id="meta-${p.id}">${if (message.isNotEmpty()) "<div class=\"detail-item\"><i class=\"fa-solid fa-info-circle\"></i> " + message.escapeHtml() + "</div>" else ""}${if (channels > 0) "<div class=\"detail-item\"><i class=\"fa-solid fa-satellite-dish\"></i> Channels: $channels</div>" else ""}</div>
   <div class="card-actions">
-    <button class="btn btn-start" id="startbtn-${p.id}" onclick="postForm('/api/profiles/start',{id:'${p.id}'});showToast('Starting','Starting profile ${p.id}...');" ${if (busy || running) "disabled" else ""}><i class="fa-solid fa-play"></i> <span>Start</span></button>
+    <button class="btn btn-start" id="startbtn-${p.id}" onclick="startProfile(${p.id})" ${if (busy || running) "disabled" else ""}><i class="fa-solid fa-play" id="starticon-${p.id}"></i> <span id="startlabel-${p.id}">Start</span></button>
     <button class="btn btn-stop" onclick="postForm('/api/profiles/stop',{id:'${p.id}'});showToast('Stopped','Profile ${p.id} stopped.');"><i class="fa-solid fa-stop"></i> <span>Stop</span></button>
     <button class="btn btn-ghost" data-action="edit"><i class="fa-solid fa-pen"></i> <span>Edit</span></button>
     <button class="btn btn-ghost" data-action="quickedit"><i class="fa-solid fa-sliders"></i> <span>Advanced</span></button>
@@ -328,6 +328,24 @@ function showToast(t, m) {
   el.style.display = 'block';
   clearTimeout(window.__tt);
   window.__tt = setTimeout(function () { el.style.display = 'none'; }, 3800);
+}
+
+async function startProfile(id) {
+  var btn = document.getElementById('startbtn-' + id);
+  var icon = document.getElementById('starticon-' + id);
+  var label = document.getElementById('startlabel-' + id);
+  if (btn) btn.disabled = true;
+  if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+  if (label) label.textContent = 'Starting...';
+  showToast('Starting', 'Connecting to portal — this may take up to a minute...');
+  try {
+    await postForm('/api/profiles/start', {id: String(id)});
+  } catch(e) {
+    showToast('Error', e.message || 'Start failed');
+    if (btn) btn.disabled = false;
+    if (icon) icon.className = 'fa-solid fa-play';
+    if (label) label.textContent = 'Start';
+  }
 }
 
 async function postForm(url, data) {

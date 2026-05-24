@@ -138,13 +138,13 @@ fun Routing.managementRoutes(engine: EngineController) {
             call.respondText("""{"ok":false,"error":"profile not found"}""", ContentType.Application.Json)
             return@post
         }
-        val result = runBlocking { engine.startProfile(profile) }
-        if (result.isSuccess) {
-            val channels = result.getOrNull()?.channelsCount ?: 0
-            call.respondText("""{"ok":true,"id":$id,"channels":$channels}""", ContentType.Application.Json)
-        } else {
-            val err = result.exceptionOrNull()?.message ?: "start failed"
-            call.respondText("""{"ok":false,"error":"$err"}""", ContentType.Application.Json)
+        // Return immediately — starting a profile takes 30-60s (portal auth + channel fetch).
+        // The browser polls /api/profile_status every 1.5s and will see the running state
+        // once the background start completes.
+        call.respondText("""{"ok":true,"id":$id,"starting":true}""", ContentType.Application.Json)
+        // Fire start in background — ManagementServer scope so it survives the request
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            engine.startProfile(profile)
         }
     }
 
