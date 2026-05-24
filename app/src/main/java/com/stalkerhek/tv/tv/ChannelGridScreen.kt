@@ -162,8 +162,7 @@ fun ChannelGridScreen(navController: NavController) {
                     Text(if (currentView == ChannelView.FAVOURITES) "⭐" else if (currentView == ChannelView.HISTORY) "🕐" else "📺", fontSize = 48.sp)
                     Spacer(Modifier.height(12.dp))
                     Text(when (currentView) {
-                        ChannelView.FAVOURITES -> "No favourites yet
-Long-press a channel to add"
+                        ChannelView.FAVOURITES -> "No favourites yet — long-press a channel to add"
                         ChannelView.HISTORY -> "No watch history yet"
                         else -> "No channels found"
                     }, color = Color(0xFF8BA38D), fontSize = 14.sp, textAlign = TextAlign.Center)
