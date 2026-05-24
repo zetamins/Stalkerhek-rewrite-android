@@ -52,10 +52,22 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon --stacktrace
+            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-output.txt; EXIT=${PIPESTATUS[0]}
           else
-            ./gradlew assembleDebug --no-daemon --stacktrace
+            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/gradle-output.txt; EXIT=${PIPESTATUS[0]}
           fi
+          # Extract just the error lines so they appear in the step summary
+          echo "## Build Errors" >> $GITHUB_STEP_SUMMARY
+          grep -E "^e: |error:|FAILURE|Unresolved|None of the following|Cannot access" /tmp/gradle-output.txt | head -60 >> $GITHUB_STEP_SUMMARY || true
+          exit $EXIT
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-error-log
+          path: /tmp/gradle-output.txt
+          retention-days: 1
 
       - name: Collect APKs
         run: |
