@@ -1,4 +1,4 @@
-# Stalkerhek-Android
+# Stalkerhek
 
 Android IPTV streaming client with embedded STB emulation engine. Built with Jetpack Compose for TV and Android, powered by a Rust native engine.
 
