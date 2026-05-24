@@ -1,5 +1,7 @@
 package com.stalkerhek.tv.tv
 
+import com.stalkerhek.tv.util.encodeUrl
+
 import android.app.PictureInPictureParams
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -16,7 +18,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -33,10 +36,11 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
+import androidx.lifecycle.lifecycleScope
+import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.persistence.WatchHistoryRepository
 import com.stalkerhek.tv.persistence.WatchHistoryEntry
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -215,27 +219,25 @@ class PlayerActivity : ComponentActivity() {
         dialBuffer.clear()
         setDialDisplay?.invoke("")
         if (number < 1) return
-        // Look up the nth channel (1-based) from the current profile's channel list
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
-            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    val channels = com.stalkerhek.tv.engine.EngineController.getChannels(profileId, "itv")
-                        .filter { it.enabled }
-                    val target = channels.getOrNull(number - 1) ?: return@launch
-                    val hlsAddr = com.stalkerhek.tv.engine.EngineController.activeProfile.value?.hlsAddr ?: ":4600"
-                    val newUrl = "http://127.0.0.1$hlsAddr/${target.title.encodeUrl()}"
-                    streamUrl = newUrl
-                    channelTitle = target.title
-                    channelCmd = target.cmd
-                    withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        player?.let {
-                            it.setMediaItem(androidx.media3.common.MediaItem.fromUri(android.net.Uri.parse(newUrl)))
-                            it.prepare()
-                            it.play()
-                        }
+        // Look up the nth enabled channel (1-based) and switch to it
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val channels = EngineController.getChannels(profileId, "itv")
+                    .filter { it.enabled }
+                val target = channels.getOrNull(number - 1) ?: return@launch
+                val hlsAddr = EngineController.activeProfile.value?.hlsAddr ?: ":4600"
+                val newUrl = "http://127.0.0.1$hlsAddr/${target.title.encodeUrl()}"
+                streamUrl = newUrl
+                channelTitle = target.title
+                channelCmd = target.cmd
+                withContext(Dispatchers.Main) {
+                    player?.let {
+                        it.setMediaItem(MediaItem.fromUri(Uri.parse(newUrl)))
+                        it.prepare()
+                        it.play()
                     }
-                } catch (_: Exception) {}
-            }
+                }
+            } catch (_: Exception) {}
         }
     }
 

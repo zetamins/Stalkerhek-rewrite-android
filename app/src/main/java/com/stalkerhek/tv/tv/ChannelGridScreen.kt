@@ -1,5 +1,7 @@
 package com.stalkerhek.tv.tv
 
+import com.stalkerhek.tv.util.encodeUrl
+
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,8 +51,6 @@ fun ChannelGridScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     var toastMsg by remember { mutableStateOf("") }
     var favouriteCount by remember { mutableStateOf(0) }
-
-    // Derived channel list
     val displayChannels = remember(allChannels, selectedGenre, currentView, profileId) {
         var list = allChannels.filter { it.enabled }
         when (currentView) {
@@ -85,7 +85,6 @@ fun ChannelGridScreen(navController: NavController) {
     }
 
     fun playChannel(channel: Channel) {
-        lastPlayedCmd = channel.cmd
         WatchHistoryRepository.record(WatchHistoryEntry(
             profileId = profileId, cmd = channel.cmd, title = channel.title,
             genre = channel.genre, logo = channel.logo

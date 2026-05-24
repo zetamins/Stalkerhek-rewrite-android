@@ -1,5 +1,7 @@
 package com.stalkerhek.tv.tv
 
+import com.stalkerhek.tv.util.encodeUrl
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*

@@ -1,5 +1,7 @@
 package com.stalkerhek.tv.tv
 
+import com.stalkerhek.tv.util.encodeUrl
+
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
