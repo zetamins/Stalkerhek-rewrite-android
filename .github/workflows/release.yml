@@ -46,16 +46,27 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build APKs
+        id: gradle_build
+        continue-on-error: true
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [[ "${{ steps.build-info.outputs.variant }}" == "release" ]]; then
-            ./gradlew assembleRelease --no-daemon --info 2>&1
+            ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
           else
-            ./gradlew assembleDebug --no-daemon --info 2>&1
+            ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/build.log
           fi
+
+      - name: Show compile errors
+        if: steps.gradle_build.outcome == 'failure' || steps.gradle_build.outcome == 'success'
+        run: |
+          echo "=== KOTLIN ERRORS ==="
+          grep -n "^e: \|error: \|Unresolved reference\|None of the following\|Cannot access\|Cannot infer\|Overload resolution\|Type mismatch\|is not applicable" /tmp/build.log || echo "No matching errors found"
+          echo "=== LAST 50 LINES ==="
+          tail -50 /tmp/build.log
+          grep -q "BUILD SUCCESSFUL" /tmp/build.log || exit 1
 
       - name: Upload build log on failure
         if: failure()
