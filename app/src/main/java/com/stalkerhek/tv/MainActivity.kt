@@ -13,9 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.stalkerhek.tv.engine.EngineController
@@ -28,10 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val navController = rememberNavController()
             val engineState by EngineController.engineState.collectAsState()
-            val profiles by EngineController.profiles.collectAsState()
-            val activeProfileId by EngineController.activeProfileId.collectAsState()
 
             Box(modifier = Modifier.fillMaxSize().background(Color(0xFF080C09))) {
                 when (engineState) {
@@ -58,25 +52,7 @@ class MainActivity : ComponentActivity() {
 
                     // ── Ready ─────────────────────────────────────────────────
                     is EngineState.Ready -> {
-                        // Determine start destination:
-                        // - No profiles → settings so user can add one
-                        // - Profile running → channels
-                        // - Profiles exist but none running → settings to start one
-                        val start = when {
-                            profiles.isEmpty() -> "settings"
-                            activeProfileId > 0 -> "channels"
-                            else -> "settings"
-                        }
-
-                        NavHost(navController = navController, startDestination = start) {
-                            composable("channels")   { ChannelGridScreen(navController) }
-                            composable("search")     { SearchScreen() }
-                            composable("epg")        { EpgScreen(navController) }
-                            composable("vod")        { VodScreen(navController) }
-                            composable("favourites") { FavouritesScreen(navController) }
-                            composable("settings")   { SettingsScreen(navController) }
-                            composable("qr")         { QrCodeScreen(navController) }
-                        }
+                        ServerDashboardScreen()
                     }
                 }
             }
