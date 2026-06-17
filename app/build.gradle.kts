@@ -13,8 +13,8 @@ android {
         applicationId = "com.stalkerhek.tv"
         minSdk = 26
         targetSdk = 36
-        versionCode = 41
-        versionName = "1.4.1"
+        versionCode = 50
+        versionName = "1.5.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
