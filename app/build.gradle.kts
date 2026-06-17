@@ -13,8 +13,8 @@ android {
         applicationId = "com.stalkerhek.tv"
         minSdk = 26
         targetSdk = 36
-        versionCode = 90
-        versionName = "1.9.0"
+        versionCode = 200
+        versionName = "2.0.0"
 
 
         ndk {
