@@ -3,6 +3,7 @@ package com.streamhek.tv.management
 import com.streamhek.tv.engine.EngineController
 import com.streamhek.tv.engine.ProfileConfig
 import com.streamhek.tv.engine.ProfileStatus
+import com.streamhek.tv.Constants
 import com.streamhek.tv.getLocalIpAddress
 import kotlinx.coroutines.runBlocking
 
@@ -216,7 +217,7 @@ details.advanced-settings[open]{border-color:var(--border-light)}
         <input id="mac" name="mac" required placeholder="00:1A:79:12:34:56" />
         <div id="macErr" class="form-error">MAC must look like 00:1A:79:12:34:56</div>
         <div class="form-row two">
-          <div><label for="hls_port">HLS Port</label><input id="hls_port" name="hls_port" required inputmode="numeric" value="4600" /></div>
+          <div><label for="hls_port">HLS Port</label><input id="hls_port" name="hls_port" required inputmode="numeric" value="${Constants.DEFAULT_HLS_PORT}" /></div>
           <div><label for="proxy_port">Proxy Port</label><input id="proxy_port" name="proxy_port" required inputmode="numeric" value="4800" /></div>
         </div>
         <details class="advanced-settings">
@@ -752,7 +753,7 @@ tr.active{background:rgba(45,138,78,.1)}
 
 <script>
 const _=id=>document.getElementById(id);
-const toast=(t,m)=>{_('toastTitle').textContent=t;_('toastMsg').textContent=m;_('toast').style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>{try{_('toast').style.display='none'}catch(e){console.warn('toast cleanup',e)}},2400)};
+const toast=(t,m)=>{_('toastTitle').textContent=t;_('toastMsg').textContent=m;_('toast').style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>{try{_('toast').style.display='none'}catch(e){}},2400)};
 const postForm=async(url,obj)=>{const fd=new URLSearchParams();Object.keys(obj||{}).forEach(k=>fd.append(k,obj[k]));const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd});if(!r.ok)throw new Error((await r.text())||r.statusText);return r.headers.get('content-type')?.includes('json')?r.json():r.text()};
 const showErr=m=>{_('errMsg').textContent=m||'Unknown error';_('errBanner').style.display='block'};
 const clearErr=()=>{_('errBanner').style.display='none';_('errMsg').textContent=''};
@@ -902,7 +903,7 @@ const loadRenameRules=async()=>{
     const j=await(await fetch('/api/filters/rename_rules?id='+st.pid,{cache:'no-store'})).json();
     _('renamePrefix').value=j.renamePrefix||'';
     _('renameSuffix').value=j.renameSuffix||'';
-  }catch(e){console.warn("loadRenameRules failed",e)}
+  }catch(e){}
   loadGenreRenames();
 };
 _('saveRename').onclick=async()=>{
@@ -998,12 +999,12 @@ _('q').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>{st.q=_('q').
 _('state').onchange=()=>{st.view=_('state').value;renderChips();loadChannels()};
 _('genreSelAll').onclick=()=>{(st.genres||[]).forEach(g=>st.genreSelected.add(g.genreId||''));renderGenres(st.genres)};
 _('genreSelNone').onclick=()=>{st.genreSelected.clear();renderGenres(st.genres)};
-_('genreEnable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
-_('genreDisable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
+_('genreEnable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
+_('genreDisable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
 _('selAll').onclick=()=>{(st.items||[]).forEach(x=>st.selected.add(x.cmd));renderChannels(st.items)};
 _('selNone').onclick=()=>{st.selected.clear();renderChannels(st.items)};
-_('bulkEnable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',ids.length+' channels');st.selected.clear();loadChannels()};
-_('bulkDisable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',ids.length+' channels');st.selected.clear();loadChannels()};
+_('bulkEnable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'0'})}catch(e){}}toast('Enabled',ids.length+' channels');st.selected.clear();loadChannels()};
+_('bulkDisable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'1'})}catch(e){}}toast('Disabled',ids.length+' channels');st.selected.clear();loadChannels()};
 
 // Init
 loadGenres();
@@ -1045,8 +1046,8 @@ const renderVodGenres=arr=>{
 _('vodGenreSearch').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>renderVodGenres(vodSt.genres),200)};
 _('vodGenreSelAll').onclick=()=>{(vodSt.genres||[]).forEach(g=>vodSt.genreSelected.add(g.genreId||''));renderVodGenres(vodSt.genres)};
 _('vodGenreSelNone').onclick=()=>{vodSt.genreSelected.clear();renderVodGenres(vodSt.genres)};
-_('vodGenreEnable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
-_('vodGenreDisable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
+_('vodGenreEnable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
+_('vodGenreDisable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
 
 // Series tab
 const seriesSt={genreSelected:new Set(),genres:[]};
@@ -1085,8 +1086,8 @@ const renderSeriesGenres=arr=>{
 _('seriesGenreSearch').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>renderSeriesGenres(seriesSt.genres),200)};
 _('seriesGenreSelAll').onclick=()=>{(seriesSt.genres||[]).forEach(g=>seriesSt.genreSelected.add(g.genreId||''));renderSeriesGenres(seriesSt.genres)};
 _('seriesGenreSelNone').onclick=()=>{seriesSt.genreSelected.clear();renderSeriesGenres(seriesSt.genres)};
-_('seriesGenreEnable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
-_('seriesGenreDisable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
+_('seriesGenreEnable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
+_('seriesGenreDisable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
 </script>
 </body>
 </html>"""
