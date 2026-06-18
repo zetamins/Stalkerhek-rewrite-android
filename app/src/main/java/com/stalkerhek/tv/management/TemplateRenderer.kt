@@ -313,12 +313,7 @@ details.advanced-settings[open]{border-color:var(--border-light)}
 <script>
 var macRe = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 
-function normalizePortal(raw) {
-  // Keep URL as-is - Rust engine builds API path (https://host/portal.php) automatically
-  var s = (raw || '').trim();
-  if (!/^https?:///i.test(s)) s = 'http://' + s;
-  return s;
-}
+function normalizePortal(raw) { var s = (raw||'').trim(); if(!/^https?:\/\//i.test(s)) s='http://'+s; return s; }
 
 function showToast(t, m) {
   var el = document.getElementById('toast');
