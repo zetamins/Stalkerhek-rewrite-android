@@ -15,7 +15,7 @@ private fun getLocalIpAddress(): String {
                 if (!host.contains(":") && !host.startsWith("127.") && !host.startsWith("169.254.")) return host
             }
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) { android.util.Log.w("StreamHek", "getLocalIp failed", e) }
     return "127.0.0.1"
 }
 fun String.escapeHtml(): String = this
@@ -30,7 +30,7 @@ fun renderDashboardHtml(engine: EngineController): String {
     val statuses = profiles.map { p ->
         try {
             runBlocking { engine.getProfileStatus(p.id) }
-        } catch (_: Exception) { null }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getProfileStatus failed in dashboard", e); null }
     }
 
     val profileCards = if (profiles.isEmpty()) {
@@ -409,7 +409,7 @@ document.getElementById('profiles').addEventListener('click', function (e) {
   if (!btn) return;
   var card = btn.closest('.profile-card');
   if (!card) return;
-  fetch('/api/profiles/stop', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + encodeURIComponent(card.getAttribute('data-id') || '') }).catch(function () {});
+  fetch('/api/profiles/stop', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + encodeURIComponent(card.getAttribute('data-id') || '') }).catch(function (e) { console.warn("stop fetch failed",e) });
   document.getElementById('edit_id').value = card.getAttribute('data-id') || '';
   ['name', 'portal', 'mac', 'hls_port', 'proxy_port'].forEach(function (f) { document.getElementById(f).value = card.getAttribute('data-' + f) || ''; });
   ['model', 'serial_number', 'device_id', 'device_id2', 'signature', 'timezone', 'username', 'watchdog_time'].forEach(function (f) {
@@ -432,7 +432,7 @@ document.getElementById('profiles').addEventListener('click', function (e) {
   var card = btn.closest('.profile-card');
   if (!card) return;
   var id = card.getAttribute('data-id') || '';
-  if (id) fetch('/api/profiles/stop', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + encodeURIComponent(id) }).catch(function () {});
+  if (id) fetch('/api/profiles/stop', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + encodeURIComponent(id) }).catch(function (e) { console.warn("stop fetch failed",e) });
   document.getElementById('qe_edit_id').value = id;
   document.getElementById('qe_name').value = card.getAttribute('data-name') || '';
   document.getElementById('qe_portal').value = card.getAttribute('data-portal') || '';
@@ -481,7 +481,7 @@ async function poll() {
       meta.innerHTML = lines.join('');
       if (startBtn) { startBtn.disabled = !!s.busy || !!s.running; }
     }
-  } catch (e) {}
+  } catch (e) { console.warn("poll failed",e) }
 }
 setInterval(poll, 1500); poll();
 </script>
@@ -764,7 +764,7 @@ tr.active{background:rgba(45,138,78,.1)}
 
 <script>
 const _=id=>document.getElementById(id);
-const toast=(t,m)=>{_('toastTitle').textContent=t;_('toastMsg').textContent=m;_('toast').style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>{try{_('toast').style.display='none'}catch(e){}},2400)};
+const toast=(t,m)=>{_('toastTitle').textContent=t;_('toastMsg').textContent=m;_('toast').style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>{try{_('toast').style.display='none'}catch(e){console.warn('toast cleanup',e)}},2400)};
 const postForm=async(url,obj)=>{const fd=new URLSearchParams();Object.keys(obj||{}).forEach(k=>fd.append(k,obj[k]));const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd});if(!r.ok)throw new Error((await r.text())||r.statusText);return r.headers.get('content-type')?.includes('json')?r.json():r.text()};
 const showErr=m=>{_('errMsg').textContent=m||'Unknown error';_('errBanner').style.display='block'};
 const clearErr=()=>{_('errBanner').style.display='none';_('errMsg').textContent=''};
@@ -1010,12 +1010,12 @@ _('q').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>{st.q=_('q').
 _('state').onchange=()=>{st.view=_('state').value;renderChips();loadChannels()};
 _('genreSelAll').onclick=()=>{(st.genres||[]).forEach(g=>st.genreSelected.add(g.genreId||''));renderGenres(st.genres)};
 _('genreSelNone').onclick=()=>{st.genreSelected.clear();renderGenres(st.genres)};
-_('genreEnable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
-_('genreDisable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
+_('genreEnable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
+_('genreDisable').onclick=async()=>{const ids=Array.from(st.genreSelected);for(const gid of ids){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',ids.length+' genres');st.genreSelected.clear();loadGenres()};
 _('selAll').onclick=()=>{(st.items||[]).forEach(x=>st.selected.add(x.cmd));renderChannels(st.items)};
 _('selNone').onclick=()=>{st.selected.clear();renderChannels(st.items)};
-_('bulkEnable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'0'})}catch(e){}}toast('Enabled',ids.length+' channels');st.selected.clear();loadChannels()};
-_('bulkDisable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'1'})}catch(e){}}toast('Disabled',ids.length+' channels');st.selected.clear();loadChannels()};
+_('bulkEnable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',ids.length+' channels');st.selected.clear();loadChannels()};
+_('bulkDisable').onclick=async()=>{const ids=Array.from(st.selected);for(const cmd of ids){try{await postForm('/api/filters/toggle_channel',{id:String(st.pid),cmd:cmd,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',ids.length+' channels');st.selected.clear();loadChannels()};
 
 // Init
 loadGenres();
@@ -1057,8 +1057,8 @@ const renderVodGenres=arr=>{
 _('vodGenreSearch').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>renderVodGenres(vodSt.genres),200)};
 _('vodGenreSelAll').onclick=()=>{(vodSt.genres||[]).forEach(g=>vodSt.genreSelected.add(g.genreId||''));renderVodGenres(vodSt.genres)};
 _('vodGenreSelNone').onclick=()=>{vodSt.genreSelected.clear();renderVodGenres(vodSt.genres)};
-_('vodGenreEnable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
-_('vodGenreDisable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
+_('vodGenreEnable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
+_('vodGenreDisable').onclick=async()=>{for(const gid of Array.from(vodSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',vodSt.genreSelected.size+' categories');vodSt.genreSelected.clear();loadVodGenres()};
 
 // Series tab
 const seriesSt={genreSelected:new Set(),genres:[]};
@@ -1097,8 +1097,8 @@ const renderSeriesGenres=arr=>{
 _('seriesGenreSearch').oninput=()=>{clearTimeout(debTimer);debTimer=setTimeout(()=>renderSeriesGenres(seriesSt.genres),200)};
 _('seriesGenreSelAll').onclick=()=>{(seriesSt.genres||[]).forEach(g=>seriesSt.genreSelected.add(g.genreId||''));renderSeriesGenres(seriesSt.genres)};
 _('seriesGenreSelNone').onclick=()=>{seriesSt.genreSelected.clear();renderSeriesGenres(seriesSt.genres)};
-_('seriesGenreEnable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){}}toast('Enabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
-_('seriesGenreDisable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){}}toast('Disabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
+_('seriesGenreEnable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'0'})}catch(e){toast("Error","Toggle failed")}toast('Enabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
+_('seriesGenreDisable').onclick=async()=>{for(const gid of Array.from(seriesSt.genreSelected)){try{await postForm('/api/filters/toggle_genre',{id:String(st.pid),genre_id:gid,disabled:'1'})}catch(e){toast("Error","Toggle failed")}toast('Disabled',seriesSt.genreSelected.size+' categories');seriesSt.genreSelected.clear();loadSeriesGenres()};
 </script>
 </body>
 </html>"""
