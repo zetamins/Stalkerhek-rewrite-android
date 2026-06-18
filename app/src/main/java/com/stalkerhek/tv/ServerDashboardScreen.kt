@@ -95,16 +95,16 @@ fun ServerDashboardScreen() {
     ) {
         val scrollState = rememberScrollState()
         // TV overscan safety: 5% margin on all sides
-        val overscanMargin = if (screenW > 600.dp) minOf(screenW, screenH) * 0.05f else 0.dp
+        val overscanMargin = if (screenW > 600.dp) (screenW.coerceAtMost(screenH)) * 0.05f else 0.dp
         val safeW = screenW - overscanMargin * 2
         val safeH = screenH - overscanMargin * 2
         val qrSize = when {
-            isUltrawide -> minOf(safeH * 0.6f, 280.dp)
-            isLandscape -> minOf(safeH * 0.5f, 220.dp)
-            else -> minOf(safeW * 0.4f, 180.dp)
+            isUltrawide -> (safeH * 0.6f).coerceAtMost(280.dp)
+            isLandscape -> (safeH * 0.5f).coerceAtMost(220.dp)
+            else -> (safeW * 0.4f).coerceAtMost(180.dp)
         }
-        val horzPad = maxOf(overscanMargin + 16.dp, screenW * 0.03f)
-        val vertPad = maxOf(overscanMargin + 12.dp, screenH * 0.02f)
+        val horzPad = (overscanMargin + 16.dp).coerceAtLeast(screenW * 0.03f)
+        val vertPad = (overscanMargin + 12.dp).coerceAtLeast(screenH * 0.02f)
 
         if (isLandscape) {
             Row(
@@ -114,7 +114,7 @@ fun ServerDashboardScreen() {
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .padding(horizontal = horzPad, vertical = vertPad),
-                horizontalArrangement = Arrangement.spacedBy(minOf(48.dp, safeW * 0.06f)),
+                horizontalArrangement = Arrangement.spacedBy((48.dp).coerceAtMost(safeW * 0.06f)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
@@ -353,7 +353,7 @@ private fun QrCodePanel(qrBitmap: Bitmap?, mgmtUrl: String, size: androidx.compo
         Text(
             text = mgmtUrl,
             color = Color(0xFF2D8A4E),
-            fontSize = minOf(18.sp, (size.value * 0.075f).sp),
+            fontSize = if (18f < size.value * 0.075f) 18.sp else (size.value * 0.075f).sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
@@ -361,7 +361,7 @@ private fun QrCodePanel(qrBitmap: Bitmap?, mgmtUrl: String, size: androidx.compo
         Text(
             text = "Scan to open settings dashboard",
             color = Color(0xFF6B806D),
-            fontSize = minOf(12.sp, (size.value * 0.05f).sp),
+            fontSize = if (12f < size.value * 0.05f) 12.sp else (size.value * 0.05f).sp,
             textAlign = TextAlign.Center
         )
     }
