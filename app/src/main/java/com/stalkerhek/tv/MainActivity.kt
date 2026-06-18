@@ -17,7 +17,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.engine.EngineState
-import com.stalkerhek.tv.tv.*
+
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 class MainActivity : ComponentActivity() {

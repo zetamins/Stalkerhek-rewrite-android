@@ -1,4 +1,4 @@
-package com.stalkerhek.tv.tv
+package com.stalkerhek.tv
 
 import android.content.Context
 import android.content.Intent
