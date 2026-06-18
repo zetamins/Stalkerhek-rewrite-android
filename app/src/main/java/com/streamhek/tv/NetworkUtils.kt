@@ -1,4 +1,4 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 import java.net.NetworkInterface
 

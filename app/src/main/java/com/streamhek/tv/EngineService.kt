@@ -1,4 +1,4 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import com.stalkerhek.tv.engine.EngineController
+import com.streamhek.tv.engine.EngineController
 
 class EngineService : Service() {
 

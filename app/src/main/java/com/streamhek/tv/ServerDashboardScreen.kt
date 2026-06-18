@@ -1,4 +1,4 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 import android.content.Context
 import android.content.Intent
@@ -28,7 +28,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import com.stalkerhek.tv.engine.EngineController
+import com.streamhek.tv.engine.EngineController
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable

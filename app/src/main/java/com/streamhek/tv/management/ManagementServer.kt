@@ -1,7 +1,7 @@
-package com.stalkerhek.tv.management
+package com.streamhek.tv.management
 
 import android.content.Context
-import com.stalkerhek.tv.engine.EngineController
+import com.streamhek.tv.engine.EngineController
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*

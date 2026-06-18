@@ -1,9 +1,9 @@
-package com.stalkerhek.tv.management
+package com.streamhek.tv.management
 
-import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.engine.ProfileConfig
-import com.stalkerhek.tv.engine.ProfileStatus
-import com.stalkerhek.tv.getLocalIpAddress
+import com.streamhek.tv.engine.EngineController
+import com.streamhek.tv.engine.ProfileConfig
+import com.streamhek.tv.engine.ProfileStatus
+import com.streamhek.tv.getLocalIpAddress
 import kotlinx.coroutines.runBlocking
 
 fun String.escapeHtml(): String = this
@@ -192,7 +192,7 @@ details.advanced-settings[open]{border-color:var(--border-light)}
       <a class="nav-link" href="/api/backup/export"><i class="fa-solid fa-download"></i><span>Export</span></a>
       <a class="nav-link" href="#" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-upload"></i><span>Import</span></a>
       <form id="import-form" method="post" action="/api/backup/import" enctype="multipart/form-data" style="display:none"><input id="import-file" type="file" name="backup" accept=".json" onchange="showToast('Importing','Restoring backup...');this.form.submit()"/></form>
-      <a class="nav-link" href="https://github.com/kidpoleon/stalkerhek" target="_blank"><i class="fa-brands fa-github"></i><span>GitHub</span></a>
+      <a class="nav-link" href="https://github.com/kidpoleon/streamhek" target="_blank"><i class="fa-brands fa-github"></i><span>GitHub</span></a>
     </div>
   </div>
 

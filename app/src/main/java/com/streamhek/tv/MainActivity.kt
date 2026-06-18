@@ -1,4 +1,4 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
-import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.engine.EngineState
+import com.streamhek.tv.engine.EngineController
+import com.streamhek.tv.engine.EngineState
 
 
 @OptIn(ExperimentalTvMaterial3Api::class)

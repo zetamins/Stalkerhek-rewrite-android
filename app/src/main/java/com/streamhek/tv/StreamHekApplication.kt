@@ -1,8 +1,8 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 import android.app.Application
 import android.content.Intent
-import com.stalkerhek.tv.engine.EngineController
+import com.streamhek.tv.engine.EngineController
 
 class StreamHekApplication : Application() {
     override fun onCreate() {

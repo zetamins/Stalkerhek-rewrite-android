@@ -1,4 +1,4 @@
-package com.stalkerhek.tv.engine
+package com.streamhek.tv.engine
 
 object RustEngineBridge {
     init {

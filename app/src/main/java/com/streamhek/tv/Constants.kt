@@ -1,4 +1,4 @@
-package com.stalkerhek.tv
+package com.streamhek.tv
 
 object Constants {
     const val MGMT_PORT = 4400

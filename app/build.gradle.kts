@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.stalkerhek.tv"
+    namespace = "com.streamhek.tv"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.stalkerhek.tv"
+        applicationId = "com.streamhek.tv"
         minSdk = 26
         targetSdk = 36
         versionCode = 220

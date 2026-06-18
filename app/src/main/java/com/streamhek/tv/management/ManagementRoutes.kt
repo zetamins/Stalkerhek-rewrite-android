@@ -1,8 +1,8 @@
-package com.stalkerhek.tv.management
+package com.streamhek.tv.management
 
-import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.engine.ProfileConfig
-import com.stalkerhek.tv.engine.RustEngineBridge
+import com.streamhek.tv.engine.EngineController
+import com.streamhek.tv.engine.ProfileConfig
+import com.streamhek.tv.engine.RustEngineBridge
 import io.ktor.http.*
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -38,7 +38,7 @@ fun Routing.managementRoutes(engine: EngineController) {
 
     // Health check
     get("/health") {
-        call.respond(mapOf("status" to "ok", "service" to "stalkerhek-android"))
+        call.respond(mapOf("status" to "ok", "service" to "streamhek-android"))
     }
 
     // Profile list
@@ -500,7 +500,7 @@ fun Routing.managementRoutes(engine: EngineController) {
                 }
             }
         }
-        call.response.header("Content-Disposition", "attachment; filename=\"stalkerhek-backup.json\"")
+        call.response.header("Content-Disposition", "attachment; filename=\"streamhek-backup.json\"")
         call.response.header("Content-Type", "application/json")
         call.respondText(backup.toString())
     }

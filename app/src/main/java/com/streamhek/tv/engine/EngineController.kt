@@ -1,7 +1,7 @@
-package com.stalkerhek.tv.engine
+package com.streamhek.tv.engine
 
 import android.content.Context
-import com.stalkerhek.tv.management.ManagementServer
+import com.streamhek.tv.management.ManagementServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
