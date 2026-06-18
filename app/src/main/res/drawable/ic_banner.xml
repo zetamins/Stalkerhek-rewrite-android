@@ -16,7 +16,7 @@
     <path
         android:fillColor="#080C09"
         android:pathData="M46,48v34l24,-17z" />
-    <!-- Text: Stalkerhek -->
+    <!-- Text: StreamHek -->
     <path
         android:fillColor="#E2ECE3"
         android:pathData="M90,65h160q4,0 4,4v42q0,4 -4,4H90q-4,0 -4,-4V69q0,-4 4,-4z" />

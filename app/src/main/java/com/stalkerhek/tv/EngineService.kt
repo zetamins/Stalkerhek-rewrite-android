@@ -49,7 +49,7 @@ class EngineService : Service() {
             "Engine Status",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Stalkerhek engine running status"
+            description = "StreamHek engine running status"
             setShowBadge(false)
         }
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -61,7 +61,7 @@ class EngineService : Service() {
         val mgmtUrl = "http://$ip:4400"
 
         return Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Stalkerhek")
+            .setContentTitle("StreamHek")
             .setContentText("Management: $mgmtUrl")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)

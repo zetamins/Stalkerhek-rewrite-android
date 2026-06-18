@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Stalkerhek</string>
-    <string name="channel_browser_title">Channels</string>
-    <string name="vod_browser_title">Movies</string>
-    <string name="series_browser_title">Series</string>
-    <string name="settings_title">Settings</string>
-    <string name="qr_code_title">Management Access</string>
+    <string name="app_name">StreamHek</string>
+    <string name="foreground_service_desc">IPTV streaming engine running — HLS and proxy servers active for local STB devices</string>
+    <string name="privacy_title">Privacy Policy</string>
 </resources>

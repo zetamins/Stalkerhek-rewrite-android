@@ -81,7 +81,7 @@ fun renderDashboardHtml(engine: EngineController): String {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stalkerhek Dashboard</title>
+<title>StreamHek Dashboard</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -197,7 +197,7 @@ details.advanced-settings[open]{border-color:var(--border-light)}
   <div class="top-bar">
     <div class="logo">
       <svg width="36" height="36" viewBox="0 0 96 96" style="flex-shrink:0"><circle cx="48" cy="48" r="46" fill="#080C09"/><circle cx="48" cy="48" r="38" fill="#2D8A4E"/><circle cx="48" cy="48" r="32" fill="#080C09"/><polygon points="40,36 40,60 60,48" fill="#2D8A4E"/></svg>
-      <h1>Stalkerhek</h1>
+      <h1>StreamHek</h1>
     </div>
     <div class="nav-links">
       <a class="nav-link" href="/dashboard"><i class="fa-solid fa-gauge"></i><span>Dashboard</span></a>
@@ -499,7 +499,7 @@ fun renderFiltersHtml(profileId: Int, profiles: List<ProfileConfig> = emptyList(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stalkerhek Filters</title>
+<title>StreamHek Filters</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -617,7 +617,7 @@ tr.active{background:rgba(45,138,78,.1)}
   <div class="top-bar">
     <div class="logo">
       <svg width="36" height="36" viewBox="0 0 96 96" style="flex-shrink:0"><circle cx="48" cy="48" r="46" fill="#080C09"/><circle cx="48" cy="48" r="38" fill="#2D8A4E"/><circle cx="48" cy="48" r="32" fill="#080C09"/><polygon points="40,36 40,60 60,48" fill="#2D8A4E"/></svg>
-      <h1>Stalkerhek</h1>
+      <h1>StreamHek</h1>
     </div>
     <div class="nav-links">
       <a class="nav-link" href="/dashboard"><i class="fa-solid fa-arrow-left"></i><span>Dashboard</span></a>

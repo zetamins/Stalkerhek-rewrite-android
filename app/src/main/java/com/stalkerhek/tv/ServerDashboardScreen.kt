@@ -128,6 +128,7 @@ fun ServerDashboardScreen() {
                         hlsPort = hlsPort, proxyPort = proxyPort
                     )
                     RestartButton { restartApp(context) }
+                    PrivacyPolicyCard()
                 }
                 if (isUltrawide) {
                     Spacer(Modifier.width(minOf(32.dp, safeW * 0.03f)))
@@ -153,8 +154,36 @@ fun ServerDashboardScreen() {
                     hlsPort = hlsPort, proxyPort = proxyPort
                 )
                 RestartButton { restartApp(context) }
+                PrivacyPolicyCard()
             }
         }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun PrivacyPolicyCard() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .background(Color(0xFF0C120E), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFF16251A), RoundedCornerShape(12.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = "PRIVACY POLICY",
+            color = Color(0xFF4A6A54),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+        Text(
+            text = "StreamHek processes all IPTV data locally on your device. No personal data, viewing habits, or credentials are collected, stored externally, or shared with any third party. The app communicates only with the IPTV portal you configure. No analytics, no tracking, no ads.",
+            color = Color(0xFF8BA38D),
+            fontSize = 11.sp
+        )
     }
 }
 
@@ -191,7 +220,7 @@ private fun RestartButton(onClick: () -> Unit) {
 private fun HeaderSection() {
     Column {
         Text(
-            text = "Stalkerhek Server",
+            text = "StreamHek Server",
             color = Color(0xFFFFFFFF),
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,

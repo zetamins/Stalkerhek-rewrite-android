@@ -72,7 +72,7 @@ fun EngineLoadingScreen() {
             ) {
                 Text("▶", color = Color.White, fontSize = 32.sp)
             }
-            Text("Stalkerhek", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("StreamHek", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Text("Starting engine...", color = Color(0xFF8BA38D), fontSize = 14.sp)
             Spacer(Modifier.height(8.dp))
             // Simple loading dots
