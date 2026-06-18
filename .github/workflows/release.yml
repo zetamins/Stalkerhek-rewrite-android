@@ -44,13 +44,13 @@ jobs:
 
       - name: Build Rust library
         working-directory: rust-core/rust-core
-        env:
-          CC_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
-          CC_x86_64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
-          AR_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
-          AR_x86_64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
         run: |
-          export PATH="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin:${PATH}"
+          NDK_BIN="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          export PATH="${NDK_BIN}:${PATH}"
+          export CC_aarch64_linux_android="${NDK_BIN}/aarch64-linux-android21-clang"
+          export CC_x86_64_linux_android="${NDK_BIN}/x86_64-linux-android21-clang"
+          export AR_aarch64_linux_android="${NDK_BIN}/llvm-ar"
+          export AR_x86_64_linux_android="${NDK_BIN}/llvm-ar"
           cargo build --release --target ${{ matrix.target }} --features android
           mkdir -p output/${{ matrix.target }}
           cp target/${{ matrix.target }}/release/libstalkerhek_engine.so output/${{ matrix.target }}/
