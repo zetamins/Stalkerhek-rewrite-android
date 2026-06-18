@@ -24,9 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.google.zxing.BarcodeFormat
@@ -89,16 +86,6 @@ fun ServerDashboardScreen() {
     val aspectRatio = configuration.screenWidthDp.toFloat() / maxOf(1, configuration.screenHeightDp)
     val isLandscape = aspectRatio > 1.1f
     val isUltrawide = aspectRatio > 1.9f
-
-    // Apply full-screen immersive mode to prevent overlap with status/nav bars
-    LaunchedEffect(Unit) {
-        val window = (context as? android.app.Activity)?.window ?: return@LaunchedEffect
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    }
 
     Box(
         modifier = Modifier
