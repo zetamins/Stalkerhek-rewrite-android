@@ -220,8 +220,9 @@ object EngineController {
     private suspend fun refreshProfiles() {
         try {
             val result = RustEngineBridge.nativeGetProfiles()
+            android.util.Log.d("StreamHek", "nativeGetProfiles result: ${result.take(200)}")
             _profiles.value = json.decodeFromString<List<ProfileConfig>>(result)
-            // Auto-detect which profile is running, if any
+            android.util.Log.d("StreamHek", "Parsed ${_profiles.value.size} profiles")
             for (p in _profiles.value) {
                 val status = getProfileStatus(p.id)
                 if (status?.running == true) {
@@ -230,7 +231,9 @@ object EngineController {
                     break
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            android.util.Log.e("StreamHek", "Failed to refresh profiles: ${e.message}", e)
+        }
     }
 }
 
