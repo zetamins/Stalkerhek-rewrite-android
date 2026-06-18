@@ -27,7 +27,6 @@ jobs:
         run: |
           rustup update stable
           rustup target add ${{ matrix.target }}
-          # Download and extract Android NDK 28.2 (r28b)
           curl -L -o ndk.zip "https://dl.google.com/android/repository/android-ndk-r28b-linux.zip"
           unzip -q ndk.zip
           echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r28b" >> $GITHUB_ENV
@@ -37,16 +36,11 @@ jobs:
         run: |
           NDK="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
           mkdir -p .cargo
-          cat > .cargo/config.toml << ENDCONFIG
-          [target.aarch64-linux-android]
-          linker = "${NDK}/aarch64-linux-android21-clang"
-
-          [target.x86_64-linux-android]
-          linker = "${NDK}/x86_64-linux-android21-clang"
-
-          [build]
-          rustflags = ["--cfg", "reqwest_unstable"]
-          ENDCONFIG
+          printf '[target.aarch64-linux-android]\nlinker = "%s/aarch64-linux-android21-clang"\n\n' "$NDK" > .cargo/config.toml
+          printf '[target.x86_64-linux-android]\nlinker = "%s/x86_64-linux-android21-clang"\n\n' "$NDK" >> .cargo/config.toml
+          printf '[build]\nrustflags = ["--cfg", "reqwest_unstable"]\n' >> .cargo/config.toml
+          echo "=== cargo config ==="
+          cat .cargo/config.toml
 
       - name: Build Rust library
         working-directory: rust-core/rust-core
