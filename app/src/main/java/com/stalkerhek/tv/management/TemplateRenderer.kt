@@ -314,7 +314,7 @@ details.advanced-settings[open]{border-color:var(--border-light)}
 var macRe = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 
 function normalizePortal(raw) {
-  // Keep URL as-is — Rust engine builds API path (https://host/portal.php) automatically
+  // Keep URL as-is - Rust engine builds API path (https://host/portal.php) automatically
   var s = (raw || '').trim();
   if (!/^https?:///i.test(s)) s = 'http://' + s;
   return s;
@@ -336,7 +336,7 @@ async function startProfile(id) {
   if (btn) btn.disabled = true;
   if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
   if (label) label.textContent = 'Starting...';
-  showToast('Starting', 'Connecting to portal — this may take up to a minute...');
+  showToast('Starting', 'Connecting to portal - this may take up to a minute...');
   try {
     await postForm('/api/profiles/start', {id: String(id)});
   } catch(e) {
