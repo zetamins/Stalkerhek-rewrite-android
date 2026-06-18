@@ -41,7 +41,7 @@ private fun getLocalIpAddress(): String {
                 if (!host.contains(":") && !host.startsWith("127.") && !host.startsWith("169.254.")) return host
             }
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) { android.util.Log.w("StreamHek", "getLocalIp failed", e) }
     return "127.0.0.1"
 }
 
@@ -77,7 +77,7 @@ fun ServerDashboardScreen() {
                 }
             }
             bitmap
-        } catch (_: Exception) { null }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "QR generation failed", e); null }
     }
 
     val configuration = LocalConfiguration.current

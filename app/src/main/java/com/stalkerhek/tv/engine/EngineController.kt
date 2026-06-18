@@ -112,7 +112,7 @@ object EngineController {
     }
 
     fun shutdown() {
-        try { RustEngineBridge.nativeShutdown() } catch (_: Exception) {}
+        try { RustEngineBridge.nativeShutdown() } catch (e: Exception) { android.util.Log.w("StreamHek", "Shutdown failed", e) }
     }
 
     suspend fun startProfile(profile: ProfileConfig): Result<ProfileStatus> {
@@ -148,21 +148,21 @@ object EngineController {
         return try {
             val result = RustEngineBridge.nativeGetChannels(profileId, type)
             json.decodeFromString<List<Channel>>(result)
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getChannels failed", e); emptyList() }
     }
 
     suspend fun getCategories(profileId: Int, type: String): List<Category> {
         return try {
             val result = RustEngineBridge.nativeGetCategories(profileId, type)
             json.decodeFromString<List<Category>>(result)
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getChannels failed", e); emptyList() }
     }
 
     suspend fun getProfileStatus(profileId: Int): ProfileStatus? {
         return try {
             val result = RustEngineBridge.nativeGetProfileStatus(profileId)
             json.decodeFromString<ProfileStatus>(result)
-        } catch (_: Exception) { null }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getProfileStatus failed", e); null }
     }
 
     suspend fun createProfile(profile: ProfileConfig): Result<ProfileConfig> {
@@ -194,26 +194,26 @@ object EngineController {
                 genreRenameName?.let { put("genre_rename_name", it) }
             }
             RustEngineBridge.nativeFilterUpdate(actionJson.toString())
-        } catch (_: Exception) {}
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "JNI call failed", e) }
     }
 
     suspend fun getFilterState(profileId: Int): String {
         return try {
             RustEngineBridge.nativeGetFilterState(profileId)
-        } catch (_: Exception) { """{"error":"failed"}""" }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getFilterState failed", e); """{"error":"failed"}""" }
     }
 
     suspend fun getDisabledGenres(profileId: Int): Set<String> {
         return try {
             val state = json.decodeFromString<JsonObject>(RustEngineBridge.nativeGetFilterState(profileId))
             state["disabled_genres"]?.jsonArray?.map { it.jsonPrimitive.content }?.toSet() ?: emptySet()
-        } catch (_: Exception) { emptySet() }
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "getDisabledGenres failed", e); emptySet() }
     }
 
     suspend fun syncFilters(snapshot: Map<Int, FilterState>) {
         try {
             RustEngineBridge.nativeSyncFilters(json.encodeToString(snapshot))
-        } catch (_: Exception) {}
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "JNI call failed", e) }
     }
 
     private suspend fun refreshProfiles() {

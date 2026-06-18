@@ -49,7 +49,7 @@ fun Routing.managementRoutes(engine: EngineController) {
     // Profile statuses (used by dashboard polling)
     get("/api/profile_status") {
         val statuses = engine.profiles.value.map { profile ->
-            try { runBlocking { engine.getProfileStatus(profile.id) } } catch (_: Exception) { null }
+            try { runBlocking { engine.getProfileStatus(profile.id) } } catch (e: Exception) { android.util.Log.w("StreamHek", "getProfileStatus failed", e); null }
         }.filterNotNull()
         call.respond(statuses)
     }
@@ -124,7 +124,7 @@ fun Routing.managementRoutes(engine: EngineController) {
         }
         try {
             runBlocking { engine.deleteProfile(id) }
-        } catch (_: Exception) {}
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "db op failed", e) }
         call.respondRedirect("/dashboard")
     }
 
@@ -161,7 +161,7 @@ fun Routing.managementRoutes(engine: EngineController) {
         }
         try {
             runBlocking { engine.stopProfile(id) }
-        } catch (_: Exception) {}
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "db op failed", e) }
         call.respondText("""{"ok":true}""", ContentType.Application.Json)
     }
 
@@ -410,7 +410,7 @@ fun Routing.managementRoutes(engine: EngineController) {
                 put("rename_suffix", suffix)
             }
             RustEngineBridge.nativeFilterUpdate(actionJson.toString())
-        } catch (_: Exception) {}
+        } catch (e: Exception) { android.util.Log.w("StreamHek", "db op failed", e) }
         // Update cache
         renamePrefixMap[pid] = prefix
         renameSuffixMap[pid] = suffix
@@ -631,7 +631,7 @@ fun Routing.managementRoutes(engine: EngineController) {
                     RustEngineBridge.nativeFilterUpdate(actionJson.toString())
                     renamePrefixMap[newId] = renamePrefix
                     renameSuffixMap[newId] = renameSuffix
-                } catch (_: Exception) {}
+                } catch (e: Exception) { android.util.Log.w("StreamHek", "db op failed", e) }
             }
 
             // Genre renames
