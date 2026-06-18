@@ -8,7 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +29,22 @@ import androidx.tv.material3.Text
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.util.getLocalIpAddress
+import java.net.NetworkInterface
+import java.util.Locale
+
+
+private fun getLocalIpAddress(): String {
+    try {
+        NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { iface ->
+            if (iface.isLoopback || !iface.isUp) return@forEach
+            iface.inetAddresses.toList().forEach { addr ->
+                val host = addr.hostAddress ?: return@forEach
+                if (!host.contains(":") && !host.startsWith("127.") && !host.startsWith("169.254.")) return host
+            }
+        }
+    } catch (_: Exception) {}
+    return "127.0.0.1"
+}
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -70,58 +87,53 @@ fun ServerDashboardScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF080C09))
-            .padding(24.dp),
+            .background(Color(0xFF080C09)),
         contentAlignment = Alignment.Center
     ) {
+        val scrollState = rememberScrollState()
+        val screenW = configuration.screenWidthDp.dp
+        val screenH = configuration.screenHeightDp.dp
+        val qrSize = if (isLandscape) minOf(screenH * 0.55f, 240.dp) else minOf(screenW * 0.45f, 200.dp)
+        val horzPad = maxOf(24.dp, screenW * 0.04f)
+
         if (isLandscape) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(48.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horzPad, maxOf(16.dp, screenH * 0.03f)),
+                horizontalArrangement = Arrangement.spacedBy(minOf(48.dp, screenW * 0.06f)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Column: Server Info & Status
                 Column(
                     modifier = Modifier.weight(1.2f),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     HeaderSection()
                     StatusPanel(
-                        localIp = localIp,
-                        runningProfileName = runningProfileName,
-                        isRunning = isRunning,
-                        channelsCount = channelsCount,
-                        hlsPort = hlsPort,
-                        proxyPort = proxyPort
+                        localIp = localIp, runningProfileName = runningProfileName,
+                        isRunning = isRunning, channelsCount = channelsCount,
+                        hlsPort = hlsPort, proxyPort = proxyPort
                     )
                     RestartButton { restartApp(context) }
                 }
-
-                // Right Column: QR Code & URL
-                Column(
-                    modifier = Modifier.weight(0.8f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl)
-                }
+                QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl, size = qrSize)
             }
         } else {
-            // Portrait layout (e.g. mobile display fallback)
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horzPad, maxOf(16.dp, screenH * 0.03f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 HeaderSection()
-                QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl)
+                QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl, size = qrSize)
                 StatusPanel(
-                    localIp = localIp,
-                    runningProfileName = runningProfileName,
-                    isRunning = isRunning,
-                    channelsCount = channelsCount,
-                    hlsPort = hlsPort,
-                    proxyPort = proxyPort
+                    localIp = localIp, runningProfileName = runningProfileName,
+                    isRunning = isRunning, channelsCount = channelsCount,
+                    hlsPort = hlsPort, proxyPort = proxyPort
                 )
                 RestartButton { restartApp(context) }
             }
@@ -302,40 +314,38 @@ private fun EndpointRow(label: String, value: String) {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun QrCodePanel(qrBitmap: Bitmap?, mgmtUrl: String) {
-    Box(
-        modifier = Modifier
-            .size(240.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .padding(12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        qrBitmap?.let {
-            Image(
-                bitmap = it.asImageBitmap(),
-                contentDescription = "Dashboard QR Code",
-                modifier = Modifier.fillMaxSize()
-            )
+private fun QrCodePanel(qrBitmap: Bitmap?, mgmtUrl: String, size: androidx.compose.ui.unit.Dp = 240.dp) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White)
+                .padding(size * 0.05f),
+            contentAlignment = Alignment.Center
+        ) {
+            qrBitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Dashboard QR Code",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
+        Spacer(Modifier.height(minOf(16.dp, size * 0.06f)))
+        Text(
+            text = mgmtUrl,
+            color = Color(0xFF2D8A4E),
+            fontSize = minOf(18.sp, (size.value * 0.075f).sp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "Scan to open settings dashboard",
+            color = Color(0xFF6B806D),
+            fontSize = minOf(12.sp, (size.value * 0.05f).sp),
+            textAlign = TextAlign.Center
+        )
     }
-
-    Spacer(Modifier.height(16.dp))
-
-    Text(
-        text = mgmtUrl,
-        color = Color(0xFF2D8A4E),
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center
-    )
-
-    Spacer(Modifier.height(4.dp))
-
-    Text(
-        text = "Scan to open settings dashboard",
-        color = Color(0xFF6B806D),
-        fontSize = 12.sp,
-        textAlign = TextAlign.Center
-    )
 }

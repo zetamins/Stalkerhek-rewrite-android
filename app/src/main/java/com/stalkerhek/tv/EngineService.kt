@@ -9,7 +9,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.util.getLocalIpAddress
+import java.net.NetworkInterface
+import java.util.Locale
 
 class EngineService : Service() {
 
