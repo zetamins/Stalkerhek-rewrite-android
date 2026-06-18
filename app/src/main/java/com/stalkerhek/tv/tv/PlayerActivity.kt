@@ -37,8 +37,6 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import androidx.lifecycle.lifecycleScope
 import com.stalkerhek.tv.engine.EngineController
-import com.stalkerhek.tv.persistence.WatchHistoryRepository
-import com.stalkerhek.tv.persistence.WatchHistoryEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,10 +82,7 @@ class PlayerActivity : ComponentActivity() {
             // Record watch start
             LaunchedEffect(Unit) {
                 if (channelCmd.isNotEmpty() && profileId > 0) {
-                    WatchHistoryRepository.record(WatchHistoryEntry(
-                        profileId = profileId, cmd = channelCmd, title = channelTitle,
-                        genre = "", logo = ""
-                    ))
+                    // Watch history removed — no persistence needed
                 }
                 delay(3000)
                 showOsd = false
@@ -243,9 +238,7 @@ class PlayerActivity : ComponentActivity() {
         super.onStop()
         // Save watch position for resume
         player?.let { p ->
-            if (channelCmd.isNotEmpty() && profileId > 0) {
-                WatchHistoryRepository.updatePosition(profileId, channelCmd, p.currentPosition)
-            }
+            // Watch position saving removed — no persistence needed
         }
         if (!isInPictureInPictureMode) {
             player?.pause()
