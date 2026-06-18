@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -54,9 +53,9 @@ data class ProfileConfig(
 data class ProfileStatus(
     val phase: String = "idle",
     val message: String = "Not started",
-    @SerialName("channels_count") val channelsCount: Int = 0,
-    @SerialName("hls_addr") val hlsAddr: String = "",
-    @SerialName("proxy_addr") val proxyAddr: String = "",
+    val channelsCount: Int = 0,
+    val hlsAddr: String = "",
+    val proxyAddr: String = "",
     val running: Boolean = false,
 )
 
