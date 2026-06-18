@@ -221,9 +221,9 @@ details.advanced-settings[open]{border-color:var(--border-light)}
         <input type="hidden" id="edit_id" name="edit_id" value="" />
         <label for="name">Profile Name</label>
         <input id="name" name="name" placeholder="Living Room / Office / Backup" />
-        <label for="portal">Portal URL <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(portal.php or load.php)</span></label>
-        <input id="portal" name="portal" required placeholder="http://example.com/stalker_portal/server/portal.php" />
-        <div id="portalErr" class="form-error">Please paste a valid portal URL ending with /portal.php or /load.php</div>
+        <label for="portal">Portal URL <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(portal base URL)</span></label>
+        <input id="portal" name="portal" required placeholder="http://example.com/stalker_portal/c/" />
+        <div id="portalErr" class="form-error">Please enter a valid Stalker portal URL</div>
         <label for="mac">MAC Address</label>
         <input id="mac" name="mac" required placeholder="00:1A:79:12:34:56" />
         <div id="macErr" class="form-error">MAC must look like 00:1A:79:12:34:56</div>
@@ -314,23 +314,10 @@ details.advanced-settings[open]{border-color:var(--border-light)}
 var macRe = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 
 function normalizePortal(raw) {
+  // Keep URL as-is — Rust engine builds API path (https://host/portal.php) automatically
   var s = (raw || '').trim();
-  if (!s) return '';
-  if (!/^https?:\/\//i.test(s)) s = 'http://' + s;
-  try {
-    var u = new URL(s);
-    var p = (u.pathname || '/').trim().toLowerCase();
-    if (!p || p === '/') { u.pathname = '/portal.php'; }
-    else if (!/\/(portal|load)\.php$/i.test(p)) {
-      if (/\.php$/i.test(p)) {
-        var d = p.substring(0, p.lastIndexOf('/')) || '/';
-        u.pathname = d + '/portal.php';
-      } else {
-        u.pathname = p.replace(/\/+$/, '') + '/portal.php';
-      }
-    }
-    return u.toString();
-  } catch (e) { return s; }
+  if (!/^https?:///i.test(s)) s = 'http://' + s;
+  return s;
 }
 
 function showToast(t, m) {
@@ -402,7 +389,7 @@ document.getElementById('addForm').addEventListener('submit', function (e) {
   var m = (document.getElementById('mac').value || '').trim().toUpperCase();
   document.getElementById('mac').value = m;
   var ok = true;
-  if (!/^https?:\/\//i.test(v) || !/\/(portal|load)\.php(\?.*)?$/i.test(v)) {
+  if (!/^https?:\/\//i.test(v) ) {
     document.getElementById('portalErr').style.display = 'block'; ok = false;
   } else { document.getElementById('portalErr').style.display = 'none'; }
   if (!macRe.test(m)) {
