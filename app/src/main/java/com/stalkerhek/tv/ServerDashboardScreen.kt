@@ -24,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.google.zxing.BarcodeFormat
@@ -82,7 +85,21 @@ fun ServerDashboardScreen() {
     }
 
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.screenWidthDp > configuration.screenHeightDp
+    val screenW = configuration.screenWidthDp.dp
+    val screenH = configuration.screenHeightDp.dp
+    val aspectRatio = configuration.screenWidthDp.toFloat() / maxOf(1, configuration.screenHeightDp)
+    val isLandscape = aspectRatio > 1.1f
+    val isUltrawide = aspectRatio > 1.9f
+
+    // Apply full-screen immersive mode to prevent overlap with status/nav bars
+    LaunchedEffect(Unit) {
+        val window = (context as? android.app.Activity)?.window ?: return@LaunchedEffect
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -91,23 +108,32 @@ fun ServerDashboardScreen() {
         contentAlignment = Alignment.Center
     ) {
         val scrollState = rememberScrollState()
-        val screenW = configuration.screenWidthDp.dp
-        val screenH = configuration.screenHeightDp.dp
-        val qrSize = if (isLandscape) minOf(screenH * 0.55f, 240.dp) else minOf(screenW * 0.45f, 200.dp)
-        val horzPad = maxOf(24.dp, screenW * 0.04f)
+        // TV overscan safety: 5% margin on all sides
+        val overscanMargin = if (screenW > 600.dp) minOf(screenW, screenH) * 0.05f else 0.dp
+        val safeW = screenW - overscanMargin * 2
+        val safeH = screenH - overscanMargin * 2
+        val qrSize = when {
+            isUltrawide -> minOf(safeH * 0.6f, 280.dp)
+            isLandscape -> minOf(safeH * 0.5f, 220.dp)
+            else -> minOf(safeW * 0.4f, 180.dp)
+        }
+        val horzPad = maxOf(overscanMargin + 16.dp, screenW * 0.03f)
+        val vertPad = maxOf(overscanMargin + 12.dp, screenH * 0.02f)
 
         if (isLandscape) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(horzPad, maxOf(16.dp, screenH * 0.03f)),
-                horizontalArrangement = Arrangement.spacedBy(minOf(48.dp, screenW * 0.06f)),
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = horzPad, vertical = vertPad),
+                horizontalArrangement = Arrangement.spacedBy(minOf(48.dp, safeW * 0.06f)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    modifier = Modifier.weight(1.2f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(minOf(16.dp, safeH * 0.025f))
                 ) {
                     HeaderSection()
                     StatusPanel(
@@ -117,6 +143,9 @@ fun ServerDashboardScreen() {
                     )
                     RestartButton { restartApp(context) }
                 }
+                if (isUltrawide) {
+                    Spacer(Modifier.width(minOf(32.dp, safeW * 0.03f)))
+                }
                 QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl, size = qrSize)
             }
         } else {
@@ -124,9 +153,11 @@ fun ServerDashboardScreen() {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(horzPad, maxOf(16.dp, screenH * 0.03f)),
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = horzPad, vertical = vertPad),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(minOf(20.dp, safeH * 0.03f))
             ) {
                 HeaderSection()
                 QrCodePanel(qrBitmap = qrBitmap, mgmtUrl = mgmtUrl, size = qrSize)
