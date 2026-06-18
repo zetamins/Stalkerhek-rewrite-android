@@ -4,7 +4,6 @@ import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.engine.ProfileConfig
 import com.stalkerhek.tv.engine.ProfileStatus
 import java.net.NetworkInterface
-import java.util.Locale
 import kotlinx.coroutines.runBlocking
 
 private fun getLocalIpAddress(): String {

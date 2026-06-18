@@ -10,7 +10,19 @@ import android.os.Build
 import android.os.IBinder
 import com.stalkerhek.tv.engine.EngineController
 import java.net.NetworkInterface
-import java.util.Locale
+
+private fun getLocalIpAddress(): String {
+    try {
+        NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { iface ->
+            if (iface.isLoopback || !iface.isUp) return@forEach
+            iface.inetAddresses.toList().forEach { addr ->
+                val host = addr.hostAddress ?: return@forEach
+                if (!host.contains(":") && !host.startsWith("127.") && !host.startsWith("169.254.")) return host
+            }
+        }
+    } catch (_: Exception) {}
+    return "127.0.0.1"
+}
 
 class EngineService : Service() {
 

@@ -33,7 +33,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.stalkerhek.tv.engine.EngineController
 import java.net.NetworkInterface
-import java.util.Locale
 
 
 private fun getLocalIpAddress(): String {
