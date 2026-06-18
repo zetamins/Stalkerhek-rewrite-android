@@ -914,7 +914,7 @@ const loadRenameRules=async()=>{
     const j=await(await fetch('/api/filters/rename_rules?id='+st.pid,{cache:'no-store'})).json();
     _('renamePrefix').value=j.renamePrefix||'';
     _('renameSuffix').value=j.renameSuffix||'';
-  }catch(e){}
+  }catch(e){console.warn("loadRenameRules failed",e)}
   loadGenreRenames();
 };
 _('saveRename').onclick=async()=>{
