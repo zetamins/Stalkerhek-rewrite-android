@@ -18,7 +18,7 @@ class EngineService : Service() {
         try {
             startForeground(NOTIFICATION_ID, buildNotification())
         } catch (_: SecurityException) {
-            // POST_NOTIFICATIONS not granted — run without foreground priority
+            // POST_NOTIFICATIONS not granted -- run without foreground priority
         }
     }
 

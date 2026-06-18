@@ -27,7 +27,7 @@ private fun randomHex(length: Int): String {
     return (1..length).map { chars[secureRandom.nextInt(chars.length)] }.joinToString("")
 }
 
-// In-memory filter state cache — needed because the Rust engine persists filter state
+// In-memory filter state cache -- needed because the Rust engine persists filter state
 // internally but doesn't expose a read-back API for rename rules and genre renames.
 private val renamePrefixMap = ConcurrentHashMap<Int, String>()
 private val renameSuffixMap = ConcurrentHashMap<Int, String>()
@@ -142,7 +142,7 @@ fun Routing.managementRoutes(engine: EngineController) {
             call.respondText("""{"ok":false,"error":"profile not found"}""", ContentType.Application.Json)
             return@post
         }
-        // Return immediately — starting a profile takes 30-60s (portal auth + channel fetch).
+        // Return immediately -- starting a profile takes 30-60s (portal auth + channel fetch).
         // The browser polls /api/profile_status every 1.5s and will see the running state
         // once the background start completes.
         call.respondText("""{"ok":true,"id":$id,"starting":true}""", ContentType.Application.Json)
