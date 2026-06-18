@@ -3,21 +3,9 @@ package com.stalkerhek.tv.management
 import com.stalkerhek.tv.engine.EngineController
 import com.stalkerhek.tv.engine.ProfileConfig
 import com.stalkerhek.tv.engine.ProfileStatus
-import java.net.NetworkInterface
+import com.stalkerhek.tv.getLocalIpAddress
 import kotlinx.coroutines.runBlocking
 
-private fun getLocalIpAddress(): String {
-    try {
-        NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { iface ->
-            if (iface.isLoopback || !iface.isUp) return@forEach
-            iface.inetAddresses.toList().forEach { addr ->
-                val host = addr.hostAddress ?: return@forEach
-                if (!host.contains(":") && !host.startsWith("127.") && !host.startsWith("169.254.")) return host
-            }
-        }
-    } catch (e: Exception) { android.util.Log.w("StreamHek", "getLocalIp failed", e) }
-    return "127.0.0.1"
-}
 fun String.escapeHtml(): String = this
     .replace("&", "&amp;")
     .replace("<", "&lt;")
