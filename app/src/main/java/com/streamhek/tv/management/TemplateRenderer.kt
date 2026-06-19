@@ -466,6 +466,7 @@ async function poll() {
       if (badgeIcon) badgeIcon.className = 'fa-solid fa-' + (s.running ? 'play' : (s.phase === 'error' ? 'exclamation-triangle' : 'pause'));
       var lines = [];
       if (s.message) lines.push('<div><i class="fa-solid fa-info-circle"></i> ' + s.message.replace(/</g,'&lt;') + '</div>');
+      if (s.discovery_done === false && !s.running) lines.push('<div><i class="fa-solid fa-magnifying-glass fa-spin"></i> Scanning for better portals...</div>');
       if (s.channelsCount) lines.push('<div><i class="fa-solid fa-satellite-dish"></i> Channels: ' + s.channelsCount + '</div>');
       meta.innerHTML = lines.join('');
       if (startBtn) { startBtn.disabled = !!s.busy || !!s.running; }

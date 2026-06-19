@@ -57,6 +57,8 @@ data class ProfileStatus(
     val hlsAddr: String = "",
     val proxyAddr: String = "",
     val running: Boolean = false,
+    @SerialName("discovery_done")
+    val discoveryDone: Boolean = false,
 )
 
 @Serializable
