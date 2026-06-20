@@ -71,8 +71,40 @@ fun renderDashboardHtml(engine: EngineController): String {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>StreamHek Dashboard</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
 <style>
+.fa-solid{display:inline-block;font-style:normal;line-height:1;text-rendering:auto}
+.fa-play::before{content:'▶'}
+.fa-stop::before{content:'⏹'}
+.fa-plus::before{content:'＋'}
+.fa-trash::before{content:'🗑'}
+.fa-pen::before{content:'✎'}
+.fa-magnifying-glass::before{content:'🔍'}
+.fa-satellite-dish::before{content:'📡'}
+.fa-info-circle::before{content:'🛈'}
+.fa-link::before{content:'🔗'}
+.fa-tv::before{content:'📺'}
+.fa-network-wired::before{content:'⚡'}
+.fa-filter::before{content:'⫸'}
+.fa-sliders::before{content:'⚙'}
+.fa-tag::before{content:'🏷'}
+.fa-tags::before{content:'🏷'}
+.fa-arrow-left::before{content:'←'}
+.fa-xmark::before{content:'✕'}
+.fa-rotate::before{content:'↻'}
+.fa-right-left::before{content:'⇆'}
+.fa-upload::before{content:'⬆'}
+.fa-download::before{content:'⬇'}
+.fa-eye::before{content:'👁'}
+.fa-eye-slash::before{content:'◌'}
+.fa-eraser::before{content:'⌫'}
+.fa-film::before{content:'🎬'}
+.fa-gauge::before{content:'📊'}
+.fa-layer-group::before{content:'⊞'}
+.fa-plus-circle::before{content:'⊕'}
+.fa-list::before{content:'☰'}
+.fa-spinner::before{content:'◌'}
+.fa-spin{animation:fa-spin 1s linear infinite}
+@keyframes fa-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#080c09;--surface:#0c120e;--surface2:#111a14;--border:#1a2c1f;--border-light:#23382a;--text:#e2ece3;--muted:#8ba38d;--brand:#2d8a4e;--brand-glow:rgba(45,138,78,0.15);--ok:#3fb970;--warn:#d4a94a;--bad:#e85d4d;--font:system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,Helvetica,Arial,sans-serif}
 html{font-size:15px}
@@ -485,8 +517,40 @@ fun renderFiltersHtml(profileId: Int, profiles: List<ProfileConfig> = emptyList(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>StreamHek Filters</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
 <style>
+.fa-solid{display:inline-block;font-style:normal;line-height:1;text-rendering:auto}
+.fa-play::before{content:'▶'}
+.fa-stop::before{content:'⏹'}
+.fa-plus::before{content:'＋'}
+.fa-trash::before{content:'🗑'}
+.fa-pen::before{content:'✎'}
+.fa-magnifying-glass::before{content:'🔍'}
+.fa-satellite-dish::before{content:'📡'}
+.fa-info-circle::before{content:'🛈'}
+.fa-link::before{content:'🔗'}
+.fa-tv::before{content:'📺'}
+.fa-network-wired::before{content:'⚡'}
+.fa-filter::before{content:'⫸'}
+.fa-sliders::before{content:'⚙'}
+.fa-tag::before{content:'🏷'}
+.fa-tags::before{content:'🏷'}
+.fa-arrow-left::before{content:'←'}
+.fa-xmark::before{content:'✕'}
+.fa-rotate::before{content:'↻'}
+.fa-right-left::before{content:'⇆'}
+.fa-upload::before{content:'⬆'}
+.fa-download::before{content:'⬇'}
+.fa-eye::before{content:'👁'}
+.fa-eye-slash::before{content:'◌'}
+.fa-eraser::before{content:'⌫'}
+.fa-film::before{content:'🎬'}
+.fa-gauge::before{content:'📊'}
+.fa-layer-group::before{content:'⊞'}
+.fa-plus-circle::before{content:'⊕'}
+.fa-list::before{content:'☰'}
+.fa-spinner::before{content:'◌'}
+.fa-spin{animation:fa-spin 1s linear infinite}
+@keyframes fa-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#080c09;--surface:#0c120e;--surface2:#111a14;--border:#1a2c1f;--border-light:#23382a;--text:#e2ece3;--muted:#8ba38d;--brand:#2d8a4e;--brand-glow:rgba(45,138,78,0.15);--ok:#3fb970;--warn:#d4a94a;--bad:#e85d4d;--font:system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,Helvetica,Arial,sans-serif}
 html{font-size:15px}
